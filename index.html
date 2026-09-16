@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 SORA Archive Player — OpenAI Sora Video Vault</title>
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #111827;
+            --bg-card: #1f2937;
+            --bg-card-hover: #374151;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --text-primary: #f9fafb;
+            --text-secondary: #9ca3af;
+            --border: #374151;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        header {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            padding: 16px 24px;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-badge {
+            background: var(--accent-gradient);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        .logo-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .logo-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .stats-badge {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #c7d2fe;
+            font-size: 0.85rem;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+
+        /* Controls Bar */
+        .controls-bar {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 240px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        select {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            min-width: 160px;
+        }
+
+        select:focus {
+            border-color: var(--accent);
+        }
+
+        .btn-reset {
+            padding: 10px 16px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-reset:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        /* Video Grid */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .video-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+        }
+
+        .thumb-preview {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .thumb-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        .play-overlay {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 0, 0, 0.65);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .video-card:hover .play-overlay {
+            transform: scale(1.15);
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .card-body {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .tag-folder {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #e0e7ff;
+        }
+
+        .tag-size {
+            color: #9ca3af;
+        }
+
+        /* Pagination / Load More */
+        .load-more-wrap {
+            display: flex;
+            justify-content: center;
+            margin-top: 32px;
+        }
+
+        .btn-load-more {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-load-more:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 64px 16px;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        /* Modal Player */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .modal-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: white;
+        }
+
+        .modal-video-box {
+            position: relative;
+            background: #000;
+            aspect-ratio: 16 / 9;
+            width: 100%;
+            max-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-video-box video {
+            width: 100%;
+            height: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            outline: none;
+        }
+
+        .modal-footer {
+            padding: 14px 20px;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-nav {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn-nav:hover:not(:disabled) {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .btn-nav:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .modal-options {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .modal-options label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .btn-raw {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .btn-raw:hover {
+            color: white;
+            border-color: var(--text-primary);
+        }
+
+        @media (max-width: 640px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <div class="logo-area">
+                <div class="logo-badge">SORA</div>
+                <div>
+                    <div class="logo-title">OpenAI Sora Archive Gallery</div>
+                    <div class="logo-subtitle">Preserved & Curated by Lukman Zaman</div>
+                </div>
+            </div>
+            <div class="stats-badge" id="statsBadge">
+                Memuat data video...
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Filter & Search Bar -->
+        <div class="controls-bar">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Cari nama video atau ID..." oninput="onFilterChange()">
+            </div>
+
+            <select id="folderSelect" onchange="onFolderChange()">
+                <option value="">Semua Folder</option>
+            </select>
+
+            <select id="subfolderSelect" onchange="onFilterChange()">
+                <option value="">Semua Subfolder</option>
+            </select>
+
+            <!-- Jump to Video Number -->
+            <div class="jump-box" style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap;">No:</span>
+                <input type="number" id="jumpInput" placeholder="1-42635" min="1" style="width: 85px; padding: 10px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 0.85rem; outline: none; text-align: center;" onkeydown="if(event.key==='Enter') jumpToVideoNumber()">
+                <button class="btn-nav" onclick="jumpToVideoNumber()" style="padding: 10px 12px;" title="Lompat ke nomor video ini">Lompat ➔</button>
+            </div>
+
+            <!-- Play Random Button -->
+            <button class="btn-random" onclick="playRandomVideo()" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'" title="Putar 1 video acak dari seluruh koleksi (Shortcut: R)">
+                🎲 Putar Acak (Random)
+            </button>
+
+            <button class="btn-reset" onclick="resetFilters()">Reset</button>
+        </div>
+
+        <!-- Video Grid -->
+        <div class="video-grid" id="videoGrid"></div>
+
+        <!-- Load More Button -->
+        <div class="load-more-wrap" id="loadMoreWrap" style="display: none;">
+            <button class="btn-load-more" onclick="loadMore()">Muat Lebih Banyak...</button>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-icon">📁</div>
+            <h3>Tidak Ada Video yang Cocok</h3>
+            <p>Coba ubah kata kunci pencarian atau reset filter folder.</p>
+        </div>
+    </div>
+
+    <!-- Modal Video Player -->
+    <div class="modal" id="videoModal" onclick="onModalBackdropClick(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1;">
+                    <span id="modalVideoBadge" style="background: var(--accent); color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">#1 / 42635</span>
+                    <div class="modal-title" id="modalTitle">Video Title</div>
+                </div>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-video-box">
+                <video id="modalVideo" controls autoplay playsinline></video>
+            </div>
+            <div class="modal-footer">
+                <div class="nav-buttons">
+                    <button class="btn-nav" id="btnPrev" onclick="navigateVideo(-1)">⏮ Sebelumnya</button>
+                    <button class="btn-nav" onclick="playRandomVideo()" style="border-color: #ec4899; color: #f472b6;" title="Lompat ke video acak sekarang (Shortcut: R)">🎲 Acak (R)</button>
+                    <button class="btn-nav" id="btnNext" onclick="navigateVideo(1)">Berikutnya ⏭</button>
+                </div>
+                <div class="modal-options">
+                    <span id="prefetchStatus" style="color: #34d399; font-size: 0.8rem; font-weight: 500; display: inline-flex; align-items: center; gap: 4px;" title="2 video berikutnya otomatis di-buffer di latar belakang agar play tanpa jeda">
+                        ⚡ Prefetch: 2 video siap
+                    </span>
+                    <label>
+                        <input type="checkbox" id="autoAdvanceCheck" checked onchange="onAutoAdvanceToggle()">
+                        ⏩ Auto-Next (Lanjut)
+                    </label>
+                    <label title="Jika dicentang, auto-next akan memilih video acak terus-menerus tanpa henti!">
+                        <input type="checkbox" id="shuffleModeCheck">
+                        🔀 Mode Acak Terus
+                    </label>
+                    <label>
+                        <input type="checkbox" id="loopCheck" onchange="onLoopToggle()">
+                        🔁 Loop 1 Video
+                    </label>
+                    <a href="#" class="btn-raw" id="btnDownload" download target="_blank">Unduh File</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Manifest Data File -->
+    <script src="videos.js"></script>
+
+    <script>
+        let allVideos = [];
+        let filteredVideos = [];
+        let displayedCount = 0;
+        const PAGE_SIZE = 36;
+        let currentModalIndex = -1;
+
+        // Video URL Resolver (Local PC vs GitHub Pages CDN)
+        function getVideoUrl(path) {
+            if (!path) return '';
+            if (path.startsWith('http://') || path.startsWith('https://')) return path;
+
+            // Check if baseUrl is provided in manifest
+            if (window.SORA_MANIFEST && window.SORA_MANIFEST.baseUrl) {
+                return window.SORA_MANIFEST.baseUrl.replace(/\/$/, '') + '/' + path.replace(/^\//, '');
+            }
+
+            // Auto-detect GitHub Pages (e.g. yolajeni90.github.io/sora-player/)
+            if (window.location.hostname.endsWith('github.io')) {
+                return 'https://raw.githubusercontent.com/yolajeni90/sora/main/' + path.replace(/^\//, '');
+            }
+
+            // Local fallback (file:// or localhost)
+            return path;
+        }
+
+        // Initialize Gallery
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof window.SORA_MANIFEST !== 'undefined' && Array.isArray(window.SORA_MANIFEST.videos)) {
+                allVideos = window.SORA_MANIFEST.videos;
+                const jumpInp = document.getElementById('jumpInput');
+                if (jumpInp) {
+                    jumpInp.placeholder = `1-${allVideos.length.toLocaleString()}`;
+                    jumpInp.max = allVideos.length;
+                }
+                const meta = window.SORA_MANIFEST;
+                const stats = document.getElementById('statsBadge');
+                if (stats && meta.generatedAt) {
+                    stats.title = `Mode: ${meta.mode} | Terakhir di-index: ${meta.generatedAt}`;
+                }
+                populateFolderOptions();
+                applyFilters();
+            } else {
+                document.getElementById('statsBadge').innerText = "Belum ada index videos.js";
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('emptyState').innerHTML = `
+                    <div class="empty-icon">⚠️</div>
+                    <h3>File videos.js Belum Ditemukan</h3>
+                    <p>Jalankan script <code>.\\update_gallery.ps1</code> di folder terminal untuk membuat indeks video.</p>
+                `;
+            }
+        });
+
+        function populateFolderOptions() {
+            const folderMap = new Map();
+            allVideos.forEach(v => {
+                if (!folderMap.has(v.f)) folderMap.set(v.f, new Set());
+                if (v.s) folderMap.get(v.f).add(v.s);
+            });
+
+            const folderSelect = document.getElementById('folderSelect');
+            folderSelect.innerHTML = '<option value="">Semua Folder (' + folderMap.size + ')</option>';
+            Array.from(folderMap.keys()).sort().forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f;
+                opt.textContent = `${f} (${allVideos.filter(v => v.f === f).length})`;
+                folderSelect.appendChild(opt);
+            });
+        }
+
+        function onFolderChange() {
+            const selectedFolder = document.getElementById('folderSelect').value;
+            const subSelect = document.getElementById('subfolderSelect');
+            subSelect.innerHTML = '<option value="">Semua Subfolder</option>';
+
+            if (selectedFolder) {
+                const subfolders = new Set();
+                allVideos.filter(v => v.f === selectedFolder).forEach(v => {
+                    if (v.s) subfolders.add(v.s);
+                });
+                Array.from(subfolders).sort().forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = s;
+                    subSelect.appendChild(opt);
+                });
+            }
+            onFilterChange();
+        }
+
+        function onFilterChange() {
+            applyFilters();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('folderSelect').value = '';
+            document.getElementById('subfolderSelect').innerHTML = '<option value="">Semua Subfolder</option>';
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            const folder = document.getElementById('folderSelect').value;
+            const sub = document.getElementById('subfolderSelect').value;
+
+            filteredVideos = allVideos.filter(v => {
+                const matchFolder = !folder || v.f === folder;
+                const matchSub = !sub || v.s === sub;
+                const matchQuery = !query || v.n.toLowerCase().includes(query) || v.p.toLowerCase().includes(query);
+                return matchFolder && matchSub && matchQuery;
+            });
+
+            document.getElementById('statsBadge').innerText = 
+                `Menampilkan: ${filteredVideos.length.toLocaleString()} dari ${allVideos.length.toLocaleString()} video`;
+
+            const jumpInput = document.getElementById('jumpInput');
+            if (jumpInput) {
+                jumpInput.placeholder = `1-${filteredVideos.length}`;
+                jumpInput.max = filteredVideos.length;
+            }
+
+            displayedCount = 0;
+            document.getElementById('videoGrid').innerHTML = '';
+            renderNextBatch();
+        }
+
+        function renderNextBatch() {
+            const grid = document.getElementById('videoGrid');
+            const nextBatch = filteredVideos.slice(displayedCount, displayedCount + PAGE_SIZE);
+
+            nextBatch.forEach((v, idx) => {
+                const actualIndex = displayedCount + idx;
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                card.onclick = () => openModal(actualIndex);
+
+                const subText = v.s ? ` / ${v.s}` : '';
+                card.innerHTML = `
+                    <div class="thumb-preview">
+                        <video preload="metadata" muted playsinline src="${getVideoUrl(v.p)}#t=0.5"></video>
+                        <div class="play-overlay">▶</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-title" title="${v.n}">${v.n}</div>
+                        <div class="card-meta">
+                            <span class="tag-folder">${v.f}${subText}</span>
+                            <span class="tag-size">${v.m} MB</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            displayedCount += nextBatch.length;
+
+            const loadMoreWrap = document.getElementById('loadMoreWrap');
+            const emptyState = document.getElementById('emptyState');
+
+            if (filteredVideos.length === 0) {
+                emptyState.style.display = 'block';
+                loadMoreWrap.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                loadMoreWrap.style.display = displayedCount < filteredVideos.length ? 'flex' : 'none';
+            }
+        }
+
+        function loadMore() {
+            renderNextBatch();
+        }
+
+        // Modal Player Logic
+        const modal = document.getElementById('videoModal');
+        const modalVideo = document.getElementById('modalVideo');
+        const modalTitle = document.getElementById('modalTitle');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const btnDownload = document.getElementById('btnDownload');
+        const autoAdvanceCheck = document.getElementById('autoAdvanceCheck');
+        const loopCheck = document.getElementById('loopCheck');
+
+        let autoAdvanceTriggered = false;
+
+        function onAutoAdvanceToggle() {
+            if (autoAdvanceCheck.checked) {
+                loopCheck.checked = false;
+                modalVideo.loop = false;
+            }
+        }
+
+        function onLoopToggle() {
+            if (loopCheck.checked) {
+                autoAdvanceCheck.checked = false;
+                modalVideo.loop = true;
+            } else {
+                modalVideo.loop = false;
+            }
+        }
+
+        // Video Prefetch Engine (Preloads next 2 videos in background)
+        const prefetchSlot1 = document.createElement('video');
+        prefetchSlot1.preload = 'auto';
+        prefetchSlot1.muted = true;
+        prefetchSlot1.playsInline = true;
+
+        const prefetchSlot2 = document.createElement('video');
+        prefetchSlot2.preload = 'auto';
+        prefetchSlot2.muted = true;
+        prefetchSlot2.playsInline = true;
+
+        const prefetchStatus = document.getElementById('prefetchStatus');
+
+        function updatePrefetch(currentIndex) {
+            let readyCount = 0;
+
+            // 1st Next Video
+            const nextIdx1 = currentIndex + 1;
+            if (nextIdx1 < filteredVideos.length) {
+                const next1 = filteredVideos[nextIdx1];
+                if (prefetchSlot1.getAttribute('data-path') !== next1.p) {
+                    prefetchSlot1.setAttribute('data-path', next1.p);
+                    prefetchSlot1.src = getVideoUrl(next1.p);
+                    prefetchSlot1.load();
+                }
+                readyCount++;
+            } else {
+                prefetchSlot1.removeAttribute('src');
+                prefetchSlot1.removeAttribute('data-path');
+            }
+
+            // 2nd Next Video
+            const nextIdx2 = currentIndex + 2;
+            if (nextIdx2 < filteredVideos.length) {
+                const next2 = filteredVideos[nextIdx2];
+                if (prefetchSlot2.getAttribute('data-path') !== next2.p) {
+                    prefetchSlot2.setAttribute('data-path', next2.p);
+                    prefetchSlot2.src = getVideoUrl(next2.p);
+                    prefetchSlot2.load();
+                }
+                readyCount++;
+            } else {
+                prefetchSlot2.removeAttribute('src');
+                prefetchSlot2.removeAttribute('data-path');
+            }
+
+            if (prefetchStatus) {
+                if (readyCount === 2) {
+                    prefetchStatus.innerText = '⚡ Prefetch: 2 video siap';
+                    prefetchStatus.style.color = '#34d399';
+                } else if (readyCount === 1) {
+                    prefetchStatus.innerText = '⚡ Prefetch: 1 video siap';
+                    prefetchStatus.style.color = '#fbbf24';
+                } else {
+                    prefetchStatus.innerText = '🏁 Akhir Daftar';
+                    prefetchStatus.style.color = '#9ca3af';
+                }
+            }
+        }
+
+        function clearPrefetch() {
+            prefetchSlot1.removeAttribute('src');
+            prefetchSlot1.removeAttribute('data-path');
+            prefetchSlot2.removeAttribute('src');
+            prefetchSlot2.removeAttribute('data-path');
+        }
+
+        function openModal(index) {
+            autoAdvanceTriggered = false;
+            currentModalIndex = index;
+            const v = filteredVideos[index];
+            if (!v) return;
+
+            const badge = document.getElementById('modalVideoBadge');
+            if (badge) {
+                badge.innerText = `#${(index + 1).toLocaleString()} / ${filteredVideos.length.toLocaleString()}`;
+            }
+
+            modalTitle.innerText = `${v.f}/${v.s ? v.s + '/' : ''}${v.n} (${v.m} MB)`;
+            modalVideo.src = getVideoUrl(v.p);
+            modalVideo.currentTime = 0;
+            modalVideo.loop = loopCheck ? loopCheck.checked : false;
+
+            const playPromise = modalVideo.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(err => {
+                    console.warn("Autoplay notice:", err);
+                });
+            }
+
+            btnDownload.href = getVideoUrl(v.p);
+            updateNavButtons();
+            updatePrefetch(index);
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            modalVideo.pause();
+            modalVideo.src = '';
+            autoAdvanceTriggered = false;
+            currentModalIndex = -1;
+            clearPrefetch();
+        }
+
+        function onModalBackdropClick(event) {
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        function updateNavButtons() {
+            btnPrev.disabled = currentModalIndex <= 0;
+            btnNext.disabled = currentModalIndex >= filteredVideos.length - 1;
+        }
+
+        function navigateVideo(direction) {
+            const newIndex = currentModalIndex + direction;
+            if (newIndex >= 0 && newIndex < filteredVideos.length) {
+                openModal(newIndex);
+            }
+        }
+
+        // Play Random Video from current filtered list
+        function playRandomVideo() {
+            if (filteredVideos.length === 0) return;
+            const randomIdx = Math.floor(Math.random() * filteredVideos.length);
+            openModal(randomIdx);
+        }
+
+        // Jump to specific video number (1-based index)
+        function jumpToVideoNumber() {
+            const jumpInput = document.getElementById('jumpInput');
+            const val = parseInt(jumpInput.value, 10);
+            if (isNaN(val) || val < 1 || val > filteredVideos.length) {
+                alert(`Silakan masukkan nomor antara 1 dan ${filteredVideos.length.toLocaleString()}`);
+                return;
+            }
+            openModal(val - 1);
+            jumpInput.blur();
+        }
+
+        function triggerNextVideo() {
+            if (!autoAdvanceCheck.checked) return;
+            if (autoAdvanceTriggered) return;
+            autoAdvanceTriggered = true;
+
+            const shuffleCheck = document.getElementById('shuffleModeCheck');
+            if (shuffleCheck && shuffleCheck.checked) {
+                // Shuffle Mode: Pick another random video
+                playRandomVideo();
+            } else {
+                // Sequential Mode: Continue naturally to next video
+                if (currentModalIndex < filteredVideos.length - 1) {
+                    navigateVideo(1);
+                }
+            }
+        }
+
+        // Standard HTML5 'ended' event
+        modalVideo.addEventListener('ended', () => {
+            triggerNextVideo();
+        });
+
+        // Fallback for silent/audioless MP4 videos (common in Sora) where Chromium may stall at end
+        modalVideo.addEventListener('timeupdate', () => {
+            if (autoAdvanceCheck.checked && !modalVideo.paused && modalVideo.duration > 0) {
+                if (modalVideo.currentTime >= modalVideo.duration - 0.2) {
+                    triggerNextVideo();
+                }
+            }
+        });
+
+        // Global & Modal Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+            // Ignore single-key shortcuts if typing in input field
+            const activeTag = document.activeElement ? document.activeElement.tagName : '';
+            if (['INPUT', 'SELECT', 'TEXTAREA'].includes(activeTag)) {
+                if (e.key === 'Escape') {
+                    document.activeElement.blur();
+                }
+                return;
+            }
+
+            // 'R' shortcut: Play Random Video
+            if (e.key === 'r' || e.key === 'R') {
+                playRandomVideo();
+                return;
+            }
+
+            // 'J' shortcut: Focus Jump to number box
+            if (e.key === 'j' || e.key === 'J') {
+                e.preventDefault();
+                const jumpInput = document.getElementById('jumpInput');
+                if (jumpInput) {
+                    jumpInput.focus();
+                    jumpInput.select();
+                }
+                return;
+            }
+
+            if (!modal.classList.contains('active')) return;
+
+            if (e.key === 'Escape') {
+                closeModal();
+            } else if (e.key === 'ArrowRight') {
+                navigateVideo(1);
+            } else if (e.key === 'ArrowLeft') {
+                navigateVideo(-1);
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                if (modalVideo.paused) modalVideo.play();
+                else modalVideo.pause();
+            }
+        });
+    </script>
+</body>
+</html>
