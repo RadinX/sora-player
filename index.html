@@ -649,6 +649,13 @@
             }
         });
 
+        function getFolderPriority(folderName) {
+            const fn = (folderName || '').toLowerCase();
+            if (fn === 'luqmanz') return -1;
+            if (fn.startsWith('standup') || fn.includes('standup')) return 1;
+            return 0;
+        }
+
         function populateFolderOptions() {
             const folderCountMap = new Map();
             allVideos.forEach(v => {
@@ -658,7 +665,12 @@
             const folderSelect = document.getElementById('folderSelect');
             folderSelect.innerHTML = `<option value="">Semua Folder (${folderCountMap.size} kategori)</option>`;
 
-            Array.from(folderCountMap.keys()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).forEach(f => {
+            Array.from(folderCountMap.keys()).sort((a, b) => {
+                const prioA = getFolderPriority(a);
+                const prioB = getFolderPriority(b);
+                if (prioA !== prioB) return prioA - prioB;
+                return a.localeCompare(b, undefined, { sensitivity: 'base' });
+            }).forEach(f => {
                 const opt = document.createElement('option');
                 opt.value = f;
                 opt.textContent = `${f} (${folderCountMap.get(f).toLocaleString()})`;

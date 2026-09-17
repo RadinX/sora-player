@@ -270,8 +270,18 @@ function processFileRecords(files, config, repoIndex) {
   return processed;
 }
 
-// Natural sorting helper for folder, subfolder, and filenames
+function getFolderPriority(folderName) {
+  const fn = (folderName || '').toLowerCase();
+  if (fn === 'luqmanz') return 0;
+  if (fn.startsWith('standup') || fn.includes('standup')) return 2;
+  return 1;
+}
+
+// Natural sorting helper for folder, subfolder, and filenames (luqmanz first, standup last)
 function compareVideos(a, b) {
+  const prioA = getFolderPriority(a.f);
+  const prioB = getFolderPriority(b.f);
+  if (prioA !== prioB) return prioA - prioB;
   if (a.f !== b.f) return a.f.localeCompare(b.f, undefined, { numeric: true, sensitivity: 'base' });
   if (a.s !== b.s) return a.s.localeCompare(b.s, undefined, { numeric: true, sensitivity: 'base' });
   return a.n.localeCompare(b.n, undefined, { numeric: true, sensitivity: 'base' });

@@ -129,6 +129,21 @@ def natural_sort_key(s):
     return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
 
 
+def folder_priority(folder_name):
+    """
+    Folder priority rule:
+      0: 'luqmanz' (always at the very beginning)
+      1: regular folders ('acid', 'aiko', 'aix', ... 'yuni')
+      2: 'standup' (always at the very end)
+    """
+    fn = (folder_name or "").lower()
+    if fn == "luqmanz":
+        return 0
+    if fn.startswith("standup") or "standup" in fn:
+        return 2
+    return 1
+
+
 def load_existing_cache(filepath, repo_configs):
     """Read existing videos from videos.js to use as fallback cache."""
     cache = {}
@@ -402,9 +417,10 @@ def main():
         print("\n[Error Fatal] Tidak ada video yang berhasil diindeks.")
         sys.exit(1)
 
-    print("\n[Sorting] Mengurutkan seluruh koleksi secara alfabetis dan hierarkis...")
+    print("\n[Sorting] Mengurutkan seluruh koleksi (luqmanz di awal, standup di akhir)...")
     all_videos.sort(key=lambda v: (
-        natural_sort_key(v["f"]),
+        folder_priority(v["f"]),
+        v["f"].lower(),
         natural_sort_key(v["s"]),
         natural_sort_key(v["n"])
     ))
@@ -458,7 +474,7 @@ def main():
         print(f"  - {r_name.ljust(20)}: {val}")
 
     print("\nRincian Folder Utama (Kategori):")
-    sorted_folders = sorted(folder_stats.items(), key=lambda x: x[1], reverse=True)
+    sorted_folders = sorted(folder_stats.items(), key=lambda x: (folder_priority(x[0]), x[0].lower()))
     for f_name, count in sorted_folders:
         print(f"  - {f_name.ljust(16)}: {count:,} video")
     print("=" * 65)
