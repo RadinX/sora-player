@@ -856,8 +856,8 @@
 
         function onShuffleToggle() {
             upcomingQueue = [];
-            if (modal.classList.contains('active') && currentModalIndex >= 0) {
-                updatePrefetch(currentModalIndex);
+            if (modal.classList.contains('active') && currentModalIndex >= 0 && !activeVideo.paused) {
+                schedulePrefetch(currentModalIndex);
             }
         }
 
@@ -953,30 +953,69 @@
         prefetchSlot2.muted = true;
         prefetchSlot2.playsInline = true;
 
-        function updatePrefetch(currentIndex) {
+        let prefetchTimer1 = null;
+        let prefetchTimer2 = null;
+
+        function cancelPendingPrefetch() {
+            if (prefetchTimer1) {
+                clearTimeout(prefetchTimer1);
+                prefetchTimer1 = null;
+            }
+            if (prefetchTimer2) {
+                clearTimeout(prefetchTimer2);
+                prefetchTimer2 = null;
+            }
+        }
+
+        function clearPrefetch() {
+            cancelPendingPrefetch();
+            prefetchSlot2.removeAttribute('src');
+            prefetchSlot2.removeAttribute('data-path');
+            prefetchSlot2.load();
+        }
+
+        // Strategic Staged Prefetch:
+        // Priority 1: Current video loads and plays with 100% bandwidth.
+        // Stage 1: After 800ms of stable active playback, preload next video in standbyVideo.
+        // Stage 2: When standby reaches canplay (or after 2s), buffer 2nd next video in prefetchSlot2.
+        function schedulePrefetch(currentIndex) {
+            cancelPendingPrefetch();
             refillUpcomingQueue(currentIndex);
 
-            // Slot 1 (Immediate Next): Preload in standbyVideo element in DOM
-            if (upcomingQueue.length > 0) {
-                const nextIdx1 = upcomingQueue[0];
-                const next1 = filteredVideos[nextIdx1];
-                if (next1) {
-                    const url1 = getVideoUrl(next1);
-                    if (standbyVideo.getAttribute('data-index') !== String(nextIdx1) || standbyVideo.getAttribute('data-path') !== next1.p) {
-                        standbyVideo.setAttribute('data-index', String(nextIdx1));
-                        standbyVideo.setAttribute('data-path', next1.p);
-                        standbyVideo.src = url1;
-                        standbyVideo.preload = 'auto';
-                        standbyVideo.load();
-                    }
-                }
-            } else {
-                standbyVideo.removeAttribute('src');
-                standbyVideo.removeAttribute('data-index');
-                standbyVideo.removeAttribute('data-path');
-            }
+            // Wait 800ms of active playback so active video buffers comfortably without network contention
+            prefetchTimer1 = setTimeout(() => {
+                if (!modal.classList.contains('active') || activeVideo.paused) return;
 
-            // Slot 2 (2nd Next): Cache in prefetchSlot2 in browser HTTP memory
+                // Load Slot 1 (Next Video) into standbyVideo in DOM
+                if (upcomingQueue.length > 0) {
+                    const nextIdx1 = upcomingQueue[0];
+                    const next1 = filteredVideos[nextIdx1];
+                    if (next1) {
+                        const url1 = getVideoUrl(next1);
+                        if (standbyVideo.getAttribute('data-index') !== String(nextIdx1) || standbyVideo.getAttribute('data-path') !== next1.p) {
+                            standbyVideo.setAttribute('data-index', String(nextIdx1));
+                            standbyVideo.setAttribute('data-path', next1.p);
+                            standbyVideo.src = url1;
+                            standbyVideo.preload = 'auto';
+                            standbyVideo.load();
+                        }
+                    }
+                } else {
+                    standbyVideo.removeAttribute('src');
+                    standbyVideo.removeAttribute('data-index');
+                    standbyVideo.removeAttribute('data-path');
+                }
+
+                // Stage 2 fallback timer: Start Slot 2 after Slot 1 has had 2000ms to buffer
+                prefetchTimer2 = setTimeout(() => {
+                    triggerPrefetchSlot2();
+                }, 2000);
+
+            }, 800);
+        }
+
+        function triggerPrefetchSlot2() {
+            if (!modal.classList.contains('active') || activeVideo.paused) return;
             if (upcomingQueue.length > 1) {
                 const nextIdx2 = upcomingQueue[1];
                 const next2 = filteredVideos[nextIdx2];
@@ -992,11 +1031,6 @@
                 prefetchSlot2.removeAttribute('src');
                 prefetchSlot2.removeAttribute('data-path');
             }
-        }
-
-        function clearPrefetch() {
-            prefetchSlot2.removeAttribute('src');
-            prefetchSlot2.removeAttribute('data-path');
         }
 
         function updateModalUI(index) {
@@ -1020,6 +1054,7 @@
             isTransitioning = false;
             currentModalIndex = index;
             upcomingQueue = [];
+            clearPrefetch();
             playedHistory.push(index);
             if (playedHistory.length > 100) playedHistory.shift();
 
@@ -1028,14 +1063,14 @@
 
             updateModalUI(index);
 
-            // Active player setup
+            // Active player setup: gets 100% bandwidth to start playing immediately!
             activeVideo.src = url;
             activeVideo.currentTime = 0;
             activeVideo.loop = loopCheck ? loopCheck.checked : false;
             activeVideo.classList.add('active');
             activeVideo.classList.remove('standby');
 
-            // Standby player reset
+            // Standby player reset: DO NOT load anything yet to avoid hanging active video
             standbyVideo.classList.remove('active');
             standbyVideo.classList.add('standby');
             standbyVideo.pause();
@@ -1051,8 +1086,7 @@
             updateNavButtons();
             modal.classList.add('active');
 
-            // Prime the standby player and prefetch slot immediately
-            updatePrefetch(index);
+            // Prefetch is triggered during active playback via 'playing' event
         }
 
         function closeModal() {
@@ -1136,7 +1170,7 @@
 
                     updateModalUI(targetIndex);
                     updateNavButtons();
-                    updatePrefetch(targetIndex);
+                    schedulePrefetch(targetIndex);
                     isTransitioning = false;
                 }, 130);
             };
@@ -1235,6 +1269,22 @@
         }
 
         // Event listeners for both players
+        function onPlayerPlaying(e) {
+            if (e.target !== activeVideo) return;
+            // Active video is now actively streaming and playing! Start staged prefetch
+            schedulePrefetch(currentModalIndex);
+        }
+
+        function onStandbyCanPlay(e) {
+            if (e.target !== standbyVideo) return;
+            // Standby video buffered enough data! Advance to Slot 2 early
+            if (prefetchTimer2) {
+                clearTimeout(prefetchTimer2);
+                prefetchTimer2 = null;
+                triggerPrefetchSlot2();
+            }
+        }
+
         function onPlayerEnded(e) {
             if (e.target !== activeVideo) return;
             triggerNextVideo();
@@ -1250,6 +1300,10 @@
             }
         }
 
+        videoA.addEventListener('playing', onPlayerPlaying);
+        videoB.addEventListener('playing', onPlayerPlaying);
+        videoA.addEventListener('canplay', onStandbyCanPlay);
+        videoB.addEventListener('canplay', onStandbyCanPlay);
         videoA.addEventListener('ended', onPlayerEnded);
         videoB.addEventListener('ended', onPlayerEnded);
         videoA.addEventListener('timeupdate', onPlayerTimeUpdate);
