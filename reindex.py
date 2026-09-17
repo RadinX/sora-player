@@ -339,9 +339,30 @@ def perform_git_sync(repo_dir, token=None, commit_msg=None):
         return False
 
 
+def get_git_credential_token():
+    """Retrieve GitHub token automatically from git credential helper if available."""
+    try:
+        proc = subprocess.Popen(
+            ["git", "credential", "fill"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        out, _ = proc.communicate(input="protocol=https\nhost=github.com\n\n", timeout=5)
+        for line in out.splitlines():
+            if line.startswith("password="):
+                tok = line.split("=", 1)[1].strip()
+                if tok:
+                    return tok
+    except Exception:
+        pass
+    return ""
+
+
 def main():
     parser = argparse.ArgumentParser(description="Sora Archive Multi-Repo Python Reindexer & Git Syncer")
-    parser.add_argument("--token", default=os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN") or "",
+    parser.add_argument("--token", default="",
                         help="GitHub Personal Access Token (PAT)")
     parser.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "videos.js"),
                         help="Path output file videos.js")
@@ -357,17 +378,21 @@ def main():
     args = parser.parse_args()
     cwd = os.path.dirname(os.path.abspath(__file__))
 
+    # Auto-detect token from argument, environment, or git credential helper
+    token = args.token or os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN") or get_git_credential_token()
+
     print("=" * 65)
     print("🎬 SORA ARCHIVE MULTI-REPO REINDEXER (PYTHON)")
     print("=" * 65)
     print(f"Target Output : {args.out}")
     print(f"Mode          : {'Lokal Disk (' + args.local_dir + ')' if args.local_dir else 'Online GitHub API'}")
+    print(f"Otentikasi    : {'Token Terdeteksi' if token else 'Anonim'}")
     print(f"Auto Git Push : {'Aktif' if args.push else 'Nonaktif'}")
     print("-" * 65)
 
     # Discover repositories
     print("[Discovery] Mendeteksi seluruh repositori sora-standup-*...")
-    standup_repos = discover_standup_repos(args.token)
+    standup_repos = discover_standup_repos(token)
     repo_configs = BASE_REPOS + standup_repos
     print(f"            Ditemukan {len(repo_configs)} target repositori: {', '.join(r['name'] for r in repo_configs)}")
 
@@ -391,7 +416,7 @@ def main():
                 else:
                     print(f"  [Peringatan] Folder lokal '{local_path}' tidak ditemukan.")
             else:
-                file_list = fetch_github_tree(config, args.token)
+                file_list = fetch_github_tree(config, token)
 
             if file_list is not None:
                 videos = process_files(file_list, config, idx)
@@ -482,7 +507,7 @@ def main():
     # Git Sync
     if args.push:
         commit_msg = args.commit_msg or f"Update video archive manifest: {len(all_videos):,} videos ({now_str})"
-        perform_git_sync(cwd, token=args.token, commit_msg=commit_msg)
+        perform_git_sync(cwd, token=token, commit_msg=commit_msg)
 
 
 if __name__ == "__main__":
