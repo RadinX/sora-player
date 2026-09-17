@@ -616,6 +616,11 @@
         }
 
         /* Floating Top Header Overlay */
+        .modal-content:fullscreen .player-toast,
+        .modal-content:-webkit-full-screen .player-toast {
+            display: none !important;
+        }
+
         .modal-content:fullscreen .modal-header,
         .modal-content:-webkit-full-screen .modal-header {
             position: absolute !important;
@@ -623,10 +628,10 @@
             left: 0 !important;
             right: 0 !important;
             z-index: 50 !important;
-            background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%) !important;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.75) 0%, transparent 100%) !important;
             border: none !important;
-            padding: 16px 28px 36px 28px !important;
-            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            padding: 10px 24px 24px 24px !important;
+            transition: opacity 0.15s ease, transform 0.15s ease !important;
             pointer-events: auto;
         }
 
@@ -634,24 +639,24 @@
         .modal-content:fullscreen .modal-footer,
         .modal-content:-webkit-full-screen .modal-footer {
             position: absolute !important;
-            bottom: 58px !important;
+            bottom: 14px !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
             z-index: 50 !important;
-            background: rgba(15, 23, 42, 0.88) !important;
+            background: rgba(15, 23, 42, 0.92) !important;
             backdrop-filter: blur(16px) !important;
             -webkit-backdrop-filter: blur(16px) !important;
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
             border-radius: 50px !important;
-            padding: 8px 22px !important;
-            gap: 16px !important;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7) !important;
+            padding: 6px 18px !important;
+            gap: 12px !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7) !important;
             width: auto !important;
             max-width: 95vw !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            transition: opacity 0.15s ease, transform 0.15s ease !important;
             pointer-events: auto;
         }
 
@@ -671,7 +676,7 @@
         .modal-content.fs-idle:fullscreen .modal-footer,
         .modal-content.fs-idle:-webkit-full-screen .modal-footer {
             opacity: 0 !important;
-            transform: translate(-50%, 40px) !important;
+            transform: translate(-50%, 50px) !important;
             pointer-events: none !important;
         }
 
@@ -735,7 +740,7 @@
                 <div class="logo-badge">SORA</div>
                 <div>
                     <div class="logo-title">OpenAI Sora Archive Gallery</div>
-                    <div class="logo-subtitle">Preserved & Curated by Lukman Zaman • 5 Unified Repositories</div>
+                    <div class="logo-subtitle">Preserved & Curated by Lukman Zaman</div>
                 </div>
             </div>
             <div class="stats-badge" id="statsBadge">
@@ -1294,6 +1299,10 @@
 
             updateNavButtons();
             modal.classList.add('active');
+            const modalContent = document.querySelector('.modal-content');
+            if (document.fullscreenElement === modalContent) {
+                modalContent.classList.add('fs-idle');
+            }
 
             // Prefetch is triggered during active playback via 'playing' event
         }
@@ -1379,6 +1388,12 @@
                     updateNavButtons();
                     schedulePrefetch(targetIndex);
                     isTransitioning = false;
+
+                    // In fullscreen, keep UI hidden so auto-advancing 5-8s videos are never covered
+                    const modalContent = document.querySelector('.modal-content');
+                    if (document.fullscreenElement === modalContent && !isHoveringUi) {
+                        modalContent.classList.add('fs-idle');
+                    }
                 }, 130);
             };
 
@@ -1523,6 +1538,8 @@
         let toastTimer = null;
 
         function showPlayerToast(msg) {
+            const modalContent = document.querySelector('.modal-content');
+            if (document.fullscreenElement === modalContent) return; // Do NOT show toasts in fullscreen to avoid covering video
             const toast = document.getElementById('playerToast');
             if (!toast) return;
             toast.textContent = msg;
@@ -1530,7 +1547,7 @@
             clearTimeout(toastTimer);
             toastTimer = setTimeout(() => {
                 toast.classList.remove('active');
-            }, 2000);
+            }, 1500);
         }
 
         function toggleFsCleanMode() {
@@ -1542,7 +1559,6 @@
                 btn.innerHTML = isFsCleanMode ? '🙈' : '👁️';
                 btn.title = isFsCleanMode ? 'Tampilkan Kontrol UI (Shortcut: H)' : 'Sembunyikan UI Total (Shortcut: H)';
             }
-            showPlayerToast(isFsCleanMode ? "Mode Murni Video (UI disembunyikan total)" : "Mode Kontrol Otomatis (UI muncul saat kursor bergerak)");
             if (!isFsCleanMode) {
                 resetFsIdleTimer();
             }
@@ -1563,12 +1579,12 @@
             modalContent.classList.remove('fs-idle');
             clearTimeout(fsIdleTimer);
 
-            // Hide HUD after 2 seconds of inactivity
+            // Hide HUD quickly (600ms) after mouse stops moving
             fsIdleTimer = setTimeout(() => {
                 if (document.fullscreenElement === modalContent && !isHoveringUi) {
                     modalContent.classList.add('fs-idle');
                 }
-            }, 2000);
+            }, 600);
         }
 
         const modalContentEl = document.querySelector('.modal-content');
@@ -1633,13 +1649,9 @@
 
             if (document.fullscreenElement === modalContent) {
                 updateFullscreenButton();
-                // Immediately start 1.2s idle timer so controls auto-hide into full video
+                // Immediately hide UI into pure full video (0ms delay)
+                modalContent.classList.add('fs-idle');
                 clearTimeout(fsIdleTimer);
-                fsIdleTimer = setTimeout(() => {
-                    if (document.fullscreenElement === modalContent && !isHoveringUi) {
-                        modalContent.classList.add('fs-idle');
-                    }
-                }, 1200);
             } else {
                 modalContent.classList.remove('fs-idle');
                 modalContent.classList.remove('fs-clean-mode');
