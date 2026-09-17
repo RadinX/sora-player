@@ -31,9 +31,24 @@ Cukup buka [`index.html`](file:///E:/sora-player/index.html) langsung di peramba
 
 ## 🔄 Cara Menjalankan Skrip Reindex
 
-Skrip reindex disediakan dalam bentuk JavaScript (Node.js) dan PowerShell (Windows):
+Skrip reindex Python ([`reindex.py`](file:///E:/sora-player/reindex.py)) dapat dijalankan langsung untuk me-reindex seluruh repository dan otomatis commit serta push ke repository `sora-player`:
 
-### Menggunakan Node.js
+### 🐍 Menggunakan Python (Direkomendasikan)
+```bash
+# Reindex otomatis dari GitHub API + Auto Git Commit & Push
+python reindex.py
+
+# Menggunakan Personal Access Token (PAT) GitHub untuk kuota 5.000 req/jam & auth push:
+python reindex.py --push --token "ghp_YOUR_TOKEN_HERE"
+
+# Reindex langsung dari folder repositori lokal di komputer (tanpa batas kuota API):
+python reindex.py --local-dir ".."
+
+# Reindex saja tanpa melakukan git push:
+python reindex.py --no-push
+```
+
+### ⚡ Menggunakan Node.js / PowerShell (Alternatif)
 ```bash
 # Reindex otomatis dari GitHub API
 node reindex.js
