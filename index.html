@@ -616,7 +616,7 @@
                         ⏩ Auto-Next (Lanjut)
                     </label>
                     <label title="Jika dicentang, auto-next akan memilih video acak terus-menerus tanpa henti!">
-                        <input type="checkbox" id="shuffleModeCheck">
+                        <input type="checkbox" id="shuffleModeCheck" onchange="onShuffleToggle()">
                         🔀 Mode Acak Terus
                     </label>
                     <label>
@@ -843,6 +843,79 @@
         let autoAdvanceTriggered = false;
         let isTransitioning = false;
 
+        // Intelligent 3-Stage Upcoming Queue System
+        // upcomingQueue[0]: Immediate next video (primed in standbyVideo DOM + hardware decoder)
+        // upcomingQueue[1]: 2nd next video (buffered in prefetchSlot2 HTTP cache)
+        let upcomingQueue = [];
+        let playedHistory = [];
+
+        function isShuffleActive() {
+            const shuffleCheck = document.getElementById('shuffleModeCheck');
+            return !!(shuffleCheck && shuffleCheck.checked);
+        }
+
+        function onShuffleToggle() {
+            upcomingQueue = [];
+            if (modal.classList.contains('active') && currentModalIndex >= 0) {
+                updatePrefetch(currentModalIndex);
+            }
+        }
+
+        // Smart Random Picker avoiding immediate repetitions
+        function getNextRandomIndex(excludeIndices = []) {
+            if (filteredVideos.length <= 1) return 0;
+            const excludeSet = new Set(excludeIndices);
+
+            let candidates = [];
+            for (let i = 0; i < filteredVideos.length; i++) {
+                if (!excludeSet.has(i)) {
+                    candidates.push(i);
+                }
+            }
+
+            // Fallback if recent history excluded too many videos
+            if (candidates.length === 0) {
+                const minimalExclude = new Set([currentModalIndex, ...upcomingQueue]);
+                for (let i = 0; i < filteredVideos.length; i++) {
+                    if (!minimalExclude.has(i)) {
+                        candidates.push(i);
+                    }
+                }
+            }
+
+            if (candidates.length === 0) {
+                return Math.floor(Math.random() * filteredVideos.length);
+            }
+
+            return candidates[Math.floor(Math.random() * candidates.length)];
+        }
+
+        // Fill upcoming pipeline queue
+        function refillUpcomingQueue(currentIndex) {
+            if (filteredVideos.length === 0) {
+                upcomingQueue = [];
+                return;
+            }
+
+            if (isShuffleActive()) {
+                // Ensure at least 2 upcoming random videos are queued in advance
+                while (upcomingQueue.length < 2) {
+                    const excludeList = [currentIndex, ...upcomingQueue, ...playedHistory.slice(-50)];
+                    const nextRand = getNextRandomIndex(excludeList);
+                    upcomingQueue.push(nextRand);
+                }
+            } else {
+                // Sequential mode: pipeline next 2 videos in list
+                upcomingQueue = [];
+                if (currentIndex + 1 < filteredVideos.length) {
+                    upcomingQueue.push(currentIndex + 1);
+                }
+                if (currentIndex + 2 < filteredVideos.length) {
+                    upcomingQueue.push(currentIndex + 2);
+                }
+            }
+        }
+
         // Synchronize Volume and Mute across both video elements
         function syncVolume(source, target) {
             if (!source || !target) return;
@@ -881,27 +954,21 @@
         prefetchSlot2.playsInline = true;
 
         function updatePrefetch(currentIndex) {
-            // 1st Next Video -> loaded into standbyVideo element in DOM
-            // This initializes hardware decoder & primes frame 0 silently
-            let nextIdx1 = currentIndex + 1;
-            const shuffleCheck = document.getElementById('shuffleModeCheck');
-            if (shuffleCheck && shuffleCheck.checked && filteredVideos.length > 1) {
-                let r;
-                do {
-                    r = Math.floor(Math.random() * filteredVideos.length);
-                } while (r === currentIndex);
-                nextIdx1 = r;
-            }
+            refillUpcomingQueue(currentIndex);
 
-            if (nextIdx1 >= 0 && nextIdx1 < filteredVideos.length) {
+            // Slot 1 (Immediate Next): Preload in standbyVideo element in DOM
+            if (upcomingQueue.length > 0) {
+                const nextIdx1 = upcomingQueue[0];
                 const next1 = filteredVideos[nextIdx1];
-                const url1 = getVideoUrl(next1);
-                if (standbyVideo.getAttribute('data-index') !== String(nextIdx1) || standbyVideo.getAttribute('data-path') !== next1.p) {
-                    standbyVideo.setAttribute('data-index', String(nextIdx1));
-                    standbyVideo.setAttribute('data-path', next1.p);
-                    standbyVideo.src = url1;
-                    standbyVideo.preload = 'auto';
-                    standbyVideo.load();
+                if (next1) {
+                    const url1 = getVideoUrl(next1);
+                    if (standbyVideo.getAttribute('data-index') !== String(nextIdx1) || standbyVideo.getAttribute('data-path') !== next1.p) {
+                        standbyVideo.setAttribute('data-index', String(nextIdx1));
+                        standbyVideo.setAttribute('data-path', next1.p);
+                        standbyVideo.src = url1;
+                        standbyVideo.preload = 'auto';
+                        standbyVideo.load();
+                    }
                 }
             } else {
                 standbyVideo.removeAttribute('src');
@@ -909,15 +976,17 @@
                 standbyVideo.removeAttribute('data-path');
             }
 
-            // 2nd Next Video -> prefetchSlot2 for HTTP caching
-            const nextIdx2 = currentIndex + 2;
-            if (nextIdx2 < filteredVideos.length) {
+            // Slot 2 (2nd Next): Cache in prefetchSlot2 in browser HTTP memory
+            if (upcomingQueue.length > 1) {
+                const nextIdx2 = upcomingQueue[1];
                 const next2 = filteredVideos[nextIdx2];
-                const url2 = getVideoUrl(next2);
-                if (prefetchSlot2.getAttribute('data-path') !== next2.p) {
-                    prefetchSlot2.setAttribute('data-path', next2.p);
-                    prefetchSlot2.src = url2;
-                    prefetchSlot2.load();
+                if (next2) {
+                    const url2 = getVideoUrl(next2);
+                    if (prefetchSlot2.getAttribute('data-path') !== next2.p) {
+                        prefetchSlot2.setAttribute('data-path', next2.p);
+                        prefetchSlot2.src = url2;
+                        prefetchSlot2.load();
+                    }
                 }
             } else {
                 prefetchSlot2.removeAttribute('src');
@@ -950,6 +1019,9 @@
             autoAdvanceTriggered = false;
             isTransitioning = false;
             currentModalIndex = index;
+            upcomingQueue = [];
+            playedHistory.push(index);
+            if (playedHistory.length > 100) playedHistory.shift();
 
             const v = filteredVideos[index];
             const url = getVideoUrl(v);
@@ -979,7 +1051,7 @@
             updateNavButtons();
             modal.classList.add('active');
 
-            // Prime the standby player with the next video immediately
+            // Prime the standby player and prefetch slot immediately
             updatePrefetch(index);
         }
 
@@ -996,6 +1068,7 @@
             autoAdvanceTriggered = false;
             isTransitioning = false;
             currentModalIndex = -1;
+            upcomingQueue = [];
             clearPrefetch();
         }
 
@@ -1007,7 +1080,7 @@
 
         function updateNavButtons() {
             btnPrev.disabled = currentModalIndex <= 0;
-            btnNext.disabled = currentModalIndex >= filteredVideos.length - 1;
+            btnNext.disabled = !isShuffleActive() && currentModalIndex >= filteredVideos.length - 1;
         }
 
         // Seamless Transition Engine: switches to new video with ZERO blink
@@ -1058,6 +1131,9 @@
                     standbyVideo = temp;
 
                     currentModalIndex = targetIndex;
+                    playedHistory.push(targetIndex);
+                    if (playedHistory.length > 100) playedHistory.shift();
+
                     updateModalUI(targetIndex);
                     updateNavButtons();
                     updatePrefetch(targetIndex);
@@ -1092,8 +1168,13 @@
         }
 
         function navigateVideo(direction) {
+            if (direction === 1 && isShuffleActive()) {
+                triggerNextVideo();
+                return;
+            }
             const newIndex = currentModalIndex + direction;
             if (newIndex >= 0 && newIndex < filteredVideos.length) {
+                upcomingQueue = [];
                 switchToVideo(newIndex);
             }
         }
@@ -1101,18 +1182,20 @@
         // Play Random Video from current filtered list
         function playRandomVideo() {
             if (filteredVideos.length === 0) return;
-            let randomIdx = currentModalIndex;
-            if (filteredVideos.length > 1) {
-                do {
-                    randomIdx = Math.floor(Math.random() * filteredVideos.length);
-                } while (randomIdx === currentModalIndex);
-            } else {
-                randomIdx = 0;
-            }
 
             if (!modal.classList.contains('active')) {
+                const randomIdx = Math.floor(Math.random() * filteredVideos.length);
                 openModal(randomIdx);
+                return;
+            }
+
+            // If already in shuffle mode, take the preloaded random video for instant zero-lag switch!
+            if (isShuffleActive() && upcomingQueue.length > 0) {
+                const targetIdx = upcomingQueue.shift();
+                switchToVideo(targetIdx);
             } else {
+                const randomIdx = getNextRandomIndex([currentModalIndex]);
+                upcomingQueue = [];
                 switchToVideo(randomIdx);
             }
         }
@@ -1126,6 +1209,7 @@
                 return;
             }
             const targetIdx = val - 1;
+            upcomingQueue = [];
             if (!modal.classList.contains('active')) {
                 openModal(targetIdx);
             } else {
@@ -1139,11 +1223,12 @@
             if (autoAdvanceTriggered || isTransitioning) return;
             autoAdvanceTriggered = true;
 
-            const shuffleCheck = document.getElementById('shuffleModeCheck');
-            if (shuffleCheck && shuffleCheck.checked) {
-                playRandomVideo();
+            // In either shuffle or sequential mode, consume from preloaded upcomingQueue!
+            if (upcomingQueue.length > 0) {
+                const targetIndex = upcomingQueue.shift();
+                switchToVideo(targetIndex);
             } else {
-                if (currentModalIndex < filteredVideos.length - 1) {
+                if (!isShuffleActive() && currentModalIndex < filteredVideos.length - 1) {
                     switchToVideo(currentModalIndex + 1);
                 }
             }
