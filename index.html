@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎬 SORA Archive Player — OpenAI Sora Video Vault</title>
+    <title>🎬 SORA Archive Player — OpenAI Sora Video Vault (Unified 5 Repositories)</title>
     <style>
         :root {
             --bg-primary: #0b0f19;
@@ -433,6 +433,7 @@
             gap: 12px;
             font-size: 0.85rem;
             color: var(--text-secondary);
+            flex-wrap: wrap;
         }
 
         .modal-options label {
@@ -459,7 +460,7 @@
             border-color: var(--text-primary);
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
             .video-grid {
                 grid-template-columns: 1fr;
             }
@@ -469,6 +470,13 @@
             }
             select {
                 width: 100%;
+            }
+            .modal-footer {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .nav-buttons {
+                justify-content: space-between;
             }
         }
     </style>
@@ -481,7 +489,7 @@
                 <div class="logo-badge">SORA</div>
                 <div>
                     <div class="logo-title">OpenAI Sora Archive Gallery</div>
-                    <div class="logo-subtitle">Preserved & Curated by Lukman Zaman</div>
+                    <div class="logo-subtitle">Preserved & Curated by Lukman Zaman • 5 Unified Repositories</div>
                 </div>
             </div>
             <div class="stats-badge" id="statsBadge">
@@ -498,24 +506,26 @@
                 <input type="text" id="searchInput" placeholder="Cari nama video atau ID..." oninput="onFilterChange()">
             </div>
 
-            <select id="folderSelect" onchange="onFolderChange()">
+            <!-- Unified Folder Select -->
+            <select id="folderSelect" onchange="onFolderChange()" title="Filter berdasarkan folder kategori">
                 <option value="">Semua Folder</option>
             </select>
 
-            <select id="subfolderSelect" onchange="onFilterChange()">
+            <!-- Dynamic Subfolder Select -->
+            <select id="subfolderSelect" onchange="onFilterChange()" title="Filter berdasarkan subfolder">
                 <option value="">Semua Subfolder</option>
             </select>
 
             <!-- Jump to Video Number -->
             <div class="jump-box" style="display: flex; align-items: center; gap: 6px;">
                 <span style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap;">No:</span>
-                <input type="number" id="jumpInput" placeholder="1-42635" min="1" style="width: 85px; padding: 10px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 0.85rem; outline: none; text-align: center;" onkeydown="if(event.key==='Enter') jumpToVideoNumber()">
+                <input type="number" id="jumpInput" placeholder="1-..." min="1" style="width: 85px; padding: 10px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 0.85rem; outline: none; text-align: center;" onkeydown="if(event.key==='Enter') jumpToVideoNumber()">
                 <button class="btn-nav" onclick="jumpToVideoNumber()" style="padding: 10px 12px;" title="Lompat ke nomor video ini">Lompat ➔</button>
             </div>
 
             <!-- Play Random Button -->
             <button class="btn-random" onclick="playRandomVideo()" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'" title="Putar 1 video acak dari seluruh koleksi (Shortcut: R)">
-                🎲 Putar Acak (Random)
+                🎲 Putar Acak (R)
             </button>
 
             <button class="btn-reset" onclick="resetFilters()">Reset</button>
@@ -542,7 +552,7 @@
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1;">
-                    <span id="modalVideoBadge" style="background: var(--accent); color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">#1 / 42635</span>
+                    <span id="modalVideoBadge" style="background: var(--accent); color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">#1 / ...</span>
                     <div class="modal-title" id="modalTitle">Video Title</div>
                 </div>
                 <button class="modal-close" onclick="closeModal()">✕</button>
@@ -557,9 +567,6 @@
                     <button class="btn-nav" id="btnNext" onclick="navigateVideo(1)">Berikutnya ⏭</button>
                 </div>
                 <div class="modal-options">
-                    <span id="prefetchStatus" style="color: #34d399; font-size: 0.8rem; font-weight: 500; display: inline-flex; align-items: center; gap: 4px;" title="2 video berikutnya otomatis di-buffer di latar belakang agar play tanpa jeda">
-                        ⚡ Prefetch: 2 video siap
-                    </span>
                     <label>
                         <input type="checkbox" id="autoAdvanceCheck" checked onchange="onAutoAdvanceToggle()">
                         ⏩ Auto-Next (Lanjut)
@@ -588,23 +595,31 @@
         const PAGE_SIZE = 36;
         let currentModalIndex = -1;
 
-        // Video URL Resolver (Local PC vs GitHub Pages CDN)
-        function getVideoUrl(path) {
+        // Video URL Resolver (Seamless Multi-Repo Direct Raw URL)
+        function getVideoUrl(item) {
+            if (!item) return '';
+            const path = (typeof item === 'string') ? item : item.p;
             if (!path) return '';
-            if (path.startsWith('http://') || path.startsWith('https://')) return path;
 
-            // Check if baseUrl is provided in manifest
-            if (window.SORA_MANIFEST && window.SORA_MANIFEST.baseUrl) {
-                return window.SORA_MANIFEST.baseUrl.replace(/\/$/, '') + '/' + path.replace(/^\//, '');
+            // Already an absolute HTTP/HTTPS or file:// URL
+            if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('file:///')) {
+                return path;
             }
 
-            // Auto-detect GitHub Pages (e.g. yolajeni90.github.io/sora-player/)
-            if (window.location.hostname.endsWith('github.io')) {
-                return 'https://raw.githubusercontent.com/yolajeni90/sora/main/' + path.replace(/^\//, '');
+            const rIndex = (typeof item === 'object' && item.r !== undefined) ? item.r : 0;
+
+            let repoInfo = null;
+            if (window.SORA_MANIFEST && Array.isArray(window.SORA_MANIFEST.repos) && window.SORA_MANIFEST.repos[rIndex]) {
+                repoInfo = window.SORA_MANIFEST.repos[rIndex];
+            } else {
+                repoInfo = {
+                    id: 'sora',
+                    name: 'sora',
+                    baseUrl: (window.SORA_MANIFEST && window.SORA_MANIFEST.baseUrl) || 'https://raw.githubusercontent.com/yolajeni90/sora/main/'
+                };
             }
 
-            // Local fallback (file:// or localhost)
-            return path;
+            return repoInfo.baseUrl.replace(/\/$/, '') + '/' + path.replace(/^\//, '');
         }
 
         // Initialize Gallery
@@ -629,24 +644,24 @@
                 document.getElementById('emptyState').innerHTML = `
                     <div class="empty-icon">⚠️</div>
                     <h3>File videos.js Belum Ditemukan</h3>
-                    <p>Jalankan script <code>.\\update_gallery.ps1</code> di folder terminal untuk membuat indeks video.</p>
+                    <p>Jalankan script <code>node reindex.js</code> atau <code>.\\reindex.ps1</code> di terminal untuk membuat indeks video.</p>
                 `;
             }
         });
 
         function populateFolderOptions() {
-            const folderMap = new Map();
+            const folderCountMap = new Map();
             allVideos.forEach(v => {
-                if (!folderMap.has(v.f)) folderMap.set(v.f, new Set());
-                if (v.s) folderMap.get(v.f).add(v.s);
+                folderCountMap.set(v.f, (folderCountMap.get(v.f) || 0) + 1);
             });
 
             const folderSelect = document.getElementById('folderSelect');
-            folderSelect.innerHTML = '<option value="">Semua Folder (' + folderMap.size + ')</option>';
-            Array.from(folderMap.keys()).sort().forEach(f => {
+            folderSelect.innerHTML = `<option value="">Semua Folder (${folderCountMap.size} kategori)</option>`;
+
+            Array.from(folderCountMap.keys()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).forEach(f => {
                 const opt = document.createElement('option');
                 opt.value = f;
-                opt.textContent = `${f} (${allVideos.filter(v => v.f === f).length})`;
+                opt.textContent = `${f} (${folderCountMap.get(f).toLocaleString()})`;
                 folderSelect.appendChild(opt);
             });
         }
@@ -657,14 +672,17 @@
             subSelect.innerHTML = '<option value="">Semua Subfolder</option>';
 
             if (selectedFolder) {
-                const subfolders = new Set();
+                const subCounts = new Map();
                 allVideos.filter(v => v.f === selectedFolder).forEach(v => {
-                    if (v.s) subfolders.add(v.s);
+                    if (v.s) {
+                        subCounts.set(v.s, (subCounts.get(v.s) || 0) + 1);
+                    }
                 });
-                Array.from(subfolders).sort().forEach(s => {
+
+                Array.from(subCounts.keys()).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })).forEach(s => {
                     const opt = document.createElement('option');
                     opt.value = s;
-                    opt.textContent = s;
+                    opt.textContent = `${s} (${subCounts.get(s).toLocaleString()})`;
                     subSelect.appendChild(opt);
                 });
             }
@@ -690,7 +708,7 @@
             filteredVideos = allVideos.filter(v => {
                 const matchFolder = !folder || v.f === folder;
                 const matchSub = !sub || v.s === sub;
-                const matchQuery = !query || v.n.toLowerCase().includes(query) || v.p.toLowerCase().includes(query);
+                const matchQuery = !query || v.n.toLowerCase().includes(query) || v.p.toLowerCase().includes(query) || v.f.toLowerCase().includes(query);
                 return matchFolder && matchSub && matchQuery;
             });
 
@@ -699,7 +717,7 @@
 
             const jumpInput = document.getElementById('jumpInput');
             if (jumpInput) {
-                jumpInput.placeholder = `1-${filteredVideos.length}`;
+                jumpInput.placeholder = `1-${filteredVideos.length.toLocaleString()}`;
                 jumpInput.max = filteredVideos.length;
             }
 
@@ -721,7 +739,7 @@
                 const subText = v.s ? ` / ${v.s}` : '';
                 card.innerHTML = `
                     <div class="thumb-preview">
-                        <video preload="metadata" muted playsinline src="${getVideoUrl(v.p)}#t=0.5"></video>
+                        <video preload="metadata" muted playsinline src="${getVideoUrl(v)}#t=0.5"></video>
                         <div class="play-overlay">▶</div>
                     </div>
                     <div class="card-body">
@@ -781,7 +799,7 @@
             }
         }
 
-        // Video Prefetch Engine (Preloads next 2 videos in background)
+        // Video Prefetch Engine (Preloads next 2 videos silently in background)
         const prefetchSlot1 = document.createElement('video');
         prefetchSlot1.preload = 'auto';
         prefetchSlot1.muted = true;
@@ -792,21 +810,17 @@
         prefetchSlot2.muted = true;
         prefetchSlot2.playsInline = true;
 
-        const prefetchStatus = document.getElementById('prefetchStatus');
-
         function updatePrefetch(currentIndex) {
-            let readyCount = 0;
-
             // 1st Next Video
             const nextIdx1 = currentIndex + 1;
             if (nextIdx1 < filteredVideos.length) {
                 const next1 = filteredVideos[nextIdx1];
+                const url1 = getVideoUrl(next1);
                 if (prefetchSlot1.getAttribute('data-path') !== next1.p) {
                     prefetchSlot1.setAttribute('data-path', next1.p);
-                    prefetchSlot1.src = getVideoUrl(next1.p);
+                    prefetchSlot1.src = url1;
                     prefetchSlot1.load();
                 }
-                readyCount++;
             } else {
                 prefetchSlot1.removeAttribute('src');
                 prefetchSlot1.removeAttribute('data-path');
@@ -816,28 +830,15 @@
             const nextIdx2 = currentIndex + 2;
             if (nextIdx2 < filteredVideos.length) {
                 const next2 = filteredVideos[nextIdx2];
+                const url2 = getVideoUrl(next2);
                 if (prefetchSlot2.getAttribute('data-path') !== next2.p) {
                     prefetchSlot2.setAttribute('data-path', next2.p);
-                    prefetchSlot2.src = getVideoUrl(next2.p);
+                    prefetchSlot2.src = url2;
                     prefetchSlot2.load();
                 }
-                readyCount++;
             } else {
                 prefetchSlot2.removeAttribute('src');
                 prefetchSlot2.removeAttribute('data-path');
-            }
-
-            if (prefetchStatus) {
-                if (readyCount === 2) {
-                    prefetchStatus.innerText = '⚡ Prefetch: 2 video siap';
-                    prefetchStatus.style.color = '#34d399';
-                } else if (readyCount === 1) {
-                    prefetchStatus.innerText = '⚡ Prefetch: 1 video siap';
-                    prefetchStatus.style.color = '#fbbf24';
-                } else {
-                    prefetchStatus.innerText = '🏁 Akhir Daftar';
-                    prefetchStatus.style.color = '#9ca3af';
-                }
             }
         }
 
@@ -859,8 +860,9 @@
                 badge.innerText = `#${(index + 1).toLocaleString()} / ${filteredVideos.length.toLocaleString()}`;
             }
 
-            modalTitle.innerText = `${v.f}/${v.s ? v.s + '/' : ''}${v.n} (${v.m} MB)`;
-            modalVideo.src = getVideoUrl(v.p);
+            const subText = v.s ? `${v.s}/` : '';
+            modalTitle.innerText = `${v.f}/${subText}${v.n} (${v.m} MB)`;
+            modalVideo.src = getVideoUrl(v);
             modalVideo.currentTime = 0;
             modalVideo.loop = loopCheck ? loopCheck.checked : false;
 
@@ -871,7 +873,7 @@
                 });
             }
 
-            btnDownload.href = getVideoUrl(v.p);
+            btnDownload.href = getVideoUrl(v);
             updateNavButtons();
             updatePrefetch(index);
             modal.classList.add('active');
@@ -930,10 +932,8 @@
 
             const shuffleCheck = document.getElementById('shuffleModeCheck');
             if (shuffleCheck && shuffleCheck.checked) {
-                // Shuffle Mode: Pick another random video
                 playRandomVideo();
             } else {
-                // Sequential Mode: Continue naturally to next video
                 if (currentModalIndex < filteredVideos.length - 1) {
                     navigateVideo(1);
                 }
@@ -956,7 +956,6 @@
 
         // Global & Modal Keyboard Shortcuts
         window.addEventListener('keydown', (e) => {
-            // Ignore single-key shortcuts if typing in input field
             const activeTag = document.activeElement ? document.activeElement.tagName : '';
             if (['INPUT', 'SELECT', 'TEXTAREA'].includes(activeTag)) {
                 if (e.key === 'Escape') {
