@@ -3,11 +3,11 @@
 SORA Archive Multi-Repo Reindexer & Git Auto-Updater
 ====================================================
 Menyatukan arsip video OpenAI Sora dari multiple repository GitHub:
-  - yolajeni90/sora
-  - yolajeni90/luqmanz
-  - yolajeni90/sora-standup-1
-  - yolajeni90/sora-standup-2
-  - yolajeni90/sora-standup-3
+  - RadinX/sora
+  - RadinX/luqmanz
+  - RadinX/sora-standup-1
+  - RadinX/sora-standup-2
+  - RadinX/sora-standup-3
   - (dan sora-standup-* berikutnya secara dinamis)
 
 Serta langsung meng-commit dan push ke repository sora-player.
@@ -39,7 +39,7 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-DEFAULT_OWNER = "yolajeni90"
+DEFAULT_OWNER = "RadinX"
 PLAYER_REPO = "sora-player"
 
 BASE_REPOS = [
@@ -334,7 +334,7 @@ def perform_git_sync(repo_dir, token=None, commit_msg=None):
         print(f"     {err_output}")
         if "403" in err_output or "Permission" in err_output:
             print("\n  [PETUNJUK OTENTIKASI]:")
-            print("  Akun Git yang tersimpan di sistem tidak memiliki izin write ke repositori yolajeni90/sora-player.")
+            print("  Akun Git yang tersimpan di sistem tidak memiliki izin write ke repositori RadinX/sora-player.")
             print("  Gunakan Personal Access Token (PAT) GitHub Anda dengan perintah:")
             print(f"    python reindex.py --push --token \"ghp_YOUR_TOKEN_HERE\"")
             print("  Atau jalankan 'git push' secara manual di sesi terminal Anda yang telah terotentikasi.")

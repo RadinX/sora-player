@@ -3,11 +3,11 @@
     SORA Multi-Repo Unified Reindexer Script
 .DESCRIPTION
     Re-indexes all Sora videos across 5 repositories:
-      - yolajeni90/sora
-      - yolajeni90/luqmanz
-      - yolajeni90/sora-standup-1
-      - yolajeni90/sora-standup-2
-      - yolajeni90/sora-standup-3
+      - RadinX/sora
+      - RadinX/luqmanz
+      - RadinX/sora-standup-1
+      - RadinX/sora-standup-2
+      - RadinX/sora-standup-3
 .EXAMPLE
     .\reindex.ps1
     .\reindex.ps1 -Token "github_pat_..."

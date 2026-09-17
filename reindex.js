@@ -1,11 +1,11 @@
 /**
  * SORA Archive Unified Reindexer
  * Re-indexes videos from 5 repositories into a single seamless manifest:
- *  - yolajeni90/sora
- *  - yolajeni90/luqmanz
- *  - yolajeni90/sora-standup-1
- *  - yolajeni90/sora-standup-2
- *  - yolajeni90/sora-standup-3
+ *  - RadinX/sora
+ *  - RadinX/luqmanz
+ *  - RadinX/sora-standup-1
+ *  - RadinX/sora-standup-2
+ *  - RadinX/sora-standup-3
  *
  * Usage:
  *   node reindex.js
@@ -20,50 +20,50 @@ const REPO_CONFIGS = [
   {
     id: 'sora',
     name: 'sora',
-    owner: 'yolajeni90',
+    owner: 'RadinX',
     repo: 'sora',
     branch: 'main',
-    baseUrl: 'https://raw.githubusercontent.com/yolajeni90/sora/main/',
+    baseUrl: 'https://raw.githubusercontent.com/RadinX/sora/main/',
     localPath: '../sora/',
     defaultFolder: null // folders derived from path in repo (acid, aiko, etc.)
   },
   {
     id: 'luqmanz',
     name: 'luqmanz',
-    owner: 'yolajeni90',
+    owner: 'RadinX',
     repo: 'luqmanz',
     branch: 'main',
-    baseUrl: 'https://raw.githubusercontent.com/yolajeni90/luqmanz/main/',
+    baseUrl: 'https://raw.githubusercontent.com/RadinX/luqmanz/main/',
     localPath: '../luqmanz/',
     defaultFolder: 'luqmanz' // unified folder name
   },
   {
     id: 'sora-standup-1',
     name: 'sora-standup-1',
-    owner: 'yolajeni90',
+    owner: 'RadinX',
     repo: 'sora-standup-1',
     branch: 'main',
-    baseUrl: 'https://raw.githubusercontent.com/yolajeni90/sora-standup-1/main/',
+    baseUrl: 'https://raw.githubusercontent.com/RadinX/sora-standup-1/main/',
     localPath: '../sora-standup-1/',
     defaultFolder: 'standup' // merged seamlessly under 'standup'
   },
   {
     id: 'sora-standup-2',
     name: 'sora-standup-2',
-    owner: 'yolajeni90',
+    owner: 'RadinX',
     repo: 'sora-standup-2',
     branch: 'main',
-    baseUrl: 'https://raw.githubusercontent.com/yolajeni90/sora-standup-2/main/',
+    baseUrl: 'https://raw.githubusercontent.com/RadinX/sora-standup-2/main/',
     localPath: '../sora-standup-2/',
     defaultFolder: 'standup' // merged seamlessly under 'standup'
   },
   {
     id: 'sora-standup-3',
     name: 'sora-standup-3',
-    owner: 'yolajeni90',
+    owner: 'RadinX',
     repo: 'sora-standup-3',
     branch: 'main',
-    baseUrl: 'https://raw.githubusercontent.com/yolajeni90/sora-standup-3/main/',
+    baseUrl: 'https://raw.githubusercontent.com/RadinX/sora-standup-3/main/',
     localPath: '../sora-standup-3/',
     defaultFolder: 'standup' // merged seamlessly under 'standup'
   }
