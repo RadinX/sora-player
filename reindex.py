@@ -298,7 +298,7 @@ def perform_git_sync(repo_dir, token=None, commit_msg=None):
         print("[Git] Tidak ada perubahan berkas untuk di-commit.")
     else:
         print("[Git] Menambahkan perubahan ke stage (git add)...")
-        files_to_stage = ["videos.js", "index.html", "reindex.py", "reindex.js", "reindex.ps1", "update_gallery.ps1", "README.md"]
+        files_to_stage = ["videos.js", "index.html", "favicon.png", "thumb.jpg", "reindex.py", "reindex.js", "reindex.ps1", "update_gallery.ps1", "README.md"]
         existing_to_stage = [f for f in files_to_stage if os.path.exists(os.path.join(repo_dir, f))]
         subprocess.run(["git", "add"] + existing_to_stage, cwd=repo_dir, check=True)
 
