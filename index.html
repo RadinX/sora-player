@@ -571,32 +571,39 @@
             transform: translateX(-50%) translateY(0);
         }
 
-        /* Unified Fullscreen Mode (Pure Full Video with Auto-Hiding Floating HUD) */
+        /* Unified Fullscreen Mode & Pseudo-Fullscreen for Mobile (iOS Safari & Android) */
         .modal-content:fullscreen,
-        .modal-content:-webkit-full-screen {
+        .modal-content:-webkit-full-screen,
+        .modal-content.is-fullscreen {
             width: 100vw !important;
             max-width: 100vw !important;
             height: 100vh !important;
+            height: 100dvh !important;
             max-height: 100vh !important;
+            max-height: 100dvh !important;
             border-radius: 0 !important;
             border: none !important;
             background: #000 !important;
             box-shadow: none !important;
             display: block !important;
-            position: relative !important;
+            position: fixed !important;
+            inset: 0 !important;
             overflow: hidden !important;
             margin: 0 !important;
             padding: 0 !important;
+            z-index: 9999 !important;
         }
 
         /* Video box occupies 100% of entire viewport */
         .modal-content:fullscreen .modal-video-box,
-        .modal-content:-webkit-full-screen .modal-video-box {
+        .modal-content:-webkit-full-screen .modal-video-box,
+        .modal-content.is-fullscreen .modal-video-box {
             position: absolute !important;
             inset: 0 !important;
             width: 100vw !important;
-            height: 100vh !important;
-            max-height: 100vh !important;
+            height: 100% !important;
+            height: 100dvh !important;
+            max-height: 100dvh !important;
             aspect-ratio: auto !important;
             background: #000 !important;
             margin: 0 !important;
@@ -605,7 +612,8 @@
         }
 
         .modal-content:fullscreen .modal-video-box video,
-        .modal-content:-webkit-full-screen .modal-video-box video {
+        .modal-content:-webkit-full-screen .modal-video-box video,
+        .modal-content.is-fullscreen .modal-video-box video {
             position: absolute !important;
             inset: 0 !important;
             width: 100% !important;
@@ -617,33 +625,36 @@
 
         /* Floating Top Header Overlay */
         .modal-content:fullscreen .player-toast,
-        .modal-content:-webkit-full-screen .player-toast {
+        .modal-content:-webkit-full-screen .player-toast,
+        .modal-content.is-fullscreen .player-toast {
             display: none !important;
         }
 
         .modal-content:fullscreen .modal-header,
-        .modal-content:-webkit-full-screen .modal-header {
+        .modal-content:-webkit-full-screen .modal-header,
+        .modal-content.is-fullscreen .modal-header {
             position: absolute !important;
             top: 0 !important;
             left: 0 !important;
             right: 0 !important;
             z-index: 50 !important;
-            background: linear-gradient(180deg, rgba(0, 0, 0, 0.75) 0%, transparent 100%) !important;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, transparent 100%) !important;
             border: none !important;
-            padding: 10px 24px 24px 24px !important;
+            padding: 10px 20px 24px 20px !important;
             transition: opacity 0.15s ease, transform 0.15s ease !important;
             pointer-events: auto;
         }
 
         /* Floating Bottom Control Capsule Overlay */
         .modal-content:fullscreen .modal-footer,
-        .modal-content:-webkit-full-screen .modal-footer {
+        .modal-content:-webkit-full-screen .modal-footer,
+        .modal-content.is-fullscreen .modal-footer {
             position: absolute !important;
             bottom: 14px !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
             z-index: 50 !important;
-            background: rgba(15, 23, 42, 0.92) !important;
+            background: rgba(15, 23, 42, 0.94) !important;
             backdrop-filter: blur(16px) !important;
             -webkit-backdrop-filter: blur(16px) !important;
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
@@ -660,57 +671,40 @@
             pointer-events: auto;
         }
 
-        /* Pure Full Video Mode when idle in Fullscreen (ZERO UI DISTRACTION) */
+        /* Pure Full Video Mode when idle (ZERO UI DISTRACTION) */
         .modal-content.fs-idle:fullscreen,
-        .modal-content.fs-idle:-webkit-full-screen {
+        .modal-content.fs-idle:-webkit-full-screen,
+        .modal-content.fs-idle.is-fullscreen {
             cursor: none !important;
         }
 
         .modal-content.fs-idle:fullscreen .modal-header,
-        .modal-content.fs-idle:-webkit-full-screen .modal-header {
+        .modal-content.fs-idle:-webkit-full-screen .modal-header,
+        .modal-content.fs-idle.is-fullscreen .modal-header,
+        .modal-content.fs-idle .modal-header {
             opacity: 0 !important;
             transform: translateY(-100%) !important;
             pointer-events: none !important;
         }
 
         .modal-content.fs-idle:fullscreen .modal-footer,
-        .modal-content.fs-idle:-webkit-full-screen .modal-footer {
+        .modal-content.fs-idle:-webkit-full-screen .modal-footer,
+        .modal-content.fs-idle.is-fullscreen .modal-footer,
+        .modal-content.fs-idle .modal-footer {
             opacity: 0 !important;
-            transform: translate(-50%, 50px) !important;
+            transform: translate(-50%, 60px) !important;
             pointer-events: none !important;
         }
 
-        /* Clean Mode (Manual permanent hide UI in Fullscreen via 'H' shortcut) */
-        .modal-content.fs-clean-mode:fullscreen,
-        .modal-content.fs-clean-mode:-webkit-full-screen {
-            cursor: none !important;
-        }
-
-        .modal-content.fs-clean-mode:fullscreen .modal-header,
-        .modal-content.fs-clean-mode:-webkit-full-screen .modal-header,
-        .modal-content.fs-clean-mode:fullscreen .modal-footer,
-        .modal-content.fs-clean-mode:-webkit-full-screen .modal-footer {
+        /* Clean Mode (Manual permanent hide UI via 'H' shortcut) */
+        .modal-content.fs-clean-mode .modal-header,
+        .modal-content.fs-clean-mode .modal-footer {
             opacity: 0 !important;
             pointer-events: none !important;
-            transform: translateY(-100%) !important;
+            display: none !important;
         }
 
-        .modal-content.fs-clean-mode:fullscreen .modal-footer,
-        .modal-content.fs-clean-mode:-webkit-full-screen .modal-footer {
-            transform: translate(-50%, 50px) !important;
-        }
-
-        @media (max-width: 768px) {
-            .modal-content:fullscreen .modal-footer,
-            .modal-content:-webkit-full-screen .modal-footer {
-                bottom: 48px !important;
-                padding: 6px 14px !important;
-                border-radius: 16px !important;
-                flex-wrap: wrap !important;
-                gap: 8px !important;
-            }
-        }
-
+        /* Responsive Mobile Phone Styling (HP) */
         @media (max-width: 768px) {
             .video-grid {
                 grid-template-columns: 1fr;
@@ -722,12 +716,108 @@
             select {
                 width: 100%;
             }
-            .modal-footer {
-                flex-direction: column;
-                align-items: stretch;
+
+            /* Mobile Immersive: In modal on HP, video is always full-screen edge-to-edge */
+            .modal {
+                padding: 0 !important;
+                background: #000 !important;
             }
+
+            .modal-content {
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: 100% !important;
+                height: 100dvh !important;
+                max-height: 100dvh !important;
+                border-radius: 0 !important;
+                border: none !important;
+                position: fixed !important;
+                inset: 0 !important;
+                background: #000 !important;
+                box-shadow: none !important;
+                display: block !important;
+                overflow: hidden !important;
+            }
+
+            .modal-video-box {
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100vw !important;
+                height: 100% !important;
+                height: 100dvh !important;
+                max-height: 100dvh !important;
+                aspect-ratio: auto !important;
+                background: #000 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                z-index: 1 !important;
+            }
+
+            .modal-video-box video {
+                position: absolute !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                max-height: 100% !important;
+                object-fit: contain !important;
+                background: #000 !important;
+            }
+
+            .modal-header {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 50 !important;
+                background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, transparent 100%) !important;
+                border: none !important;
+                padding: 10px 14px 20px 14px !important;
+                transition: opacity 0.15s ease, transform 0.15s ease !important;
+            }
+
+            .modal-footer {
+                position: absolute !important;
+                bottom: 12px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                z-index: 50 !important;
+                background: rgba(15, 23, 42, 0.94) !important;
+                backdrop-filter: blur(16px) !important;
+                -webkit-backdrop-filter: blur(16px) !important;
+                border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                border-radius: 24px !important;
+                padding: 8px 12px !important;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8) !important;
+                width: calc(100% - 24px) !important;
+                max-width: 480px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+                transition: opacity 0.15s ease, transform 0.15s ease !important;
+            }
+
             .nav-buttons {
+                width: 100%;
+                display: flex;
                 justify-content: space-between;
+                gap: 6px;
+            }
+
+            .nav-buttons .btn-nav {
+                flex: 1;
+                justify-content: center;
+                padding: 6px 8px;
+                font-size: 0.8rem;
+            }
+
+            .modal-options {
+                width: 100%;
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.75rem;
+                flex-wrap: wrap;
             }
         }
     </style>
@@ -1299,18 +1389,22 @@
 
             updateNavButtons();
             modal.classList.add('active');
-            const modalContent = document.querySelector('.modal-content');
-            if (document.fullscreenElement === modalContent) {
-                modalContent.classList.add('fs-idle');
-            }
+            showPlayerUI(1200);
 
             // Prefetch is triggered during active playback via 'playing' event
         }
 
         function closeModal() {
-            if (document.fullscreenElement) {
+            if (document.fullscreenElement && document.exitFullscreen) {
                 document.exitFullscreen().catch(() => {});
             }
+            const modalContent = document.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.classList.remove('is-fullscreen');
+                modalContent.classList.remove('fs-idle');
+                modalContent.classList.remove('fs-clean-mode');
+            }
+            clearTimeout(fsIdleTimer);
             modal.classList.remove('active');
             videoA.pause();
             videoB.pause();
@@ -1389,11 +1483,8 @@
                     schedulePrefetch(targetIndex);
                     isTransitioning = false;
 
-                    // In fullscreen, keep UI hidden so auto-advancing 5-8s videos are never covered
-                    const modalContent = document.querySelector('.modal-content');
-                    if (document.fullscreenElement === modalContent && !isHoveringUi) {
-                        modalContent.classList.add('fs-idle');
-                    }
+                    // Keep UI hidden so auto-advancing 5-8s videos are never covered on PC or HP
+                    hidePlayerUI();
                 }, 130);
             };
 
@@ -1531,23 +1622,40 @@
         videoA.addEventListener('timeupdate', onPlayerTimeUpdate);
         videoB.addEventListener('timeupdate', onPlayerTimeUpdate);
 
-        // Fullscreen Player Management & Auto-Hiding HUD
+        // Unified UI Auto-Hide Engine (Responsive for PC & HP)
         let fsIdleTimer = null;
         let isFsCleanMode = false;
-        let isHoveringUi = false;
-        let toastTimer = null;
 
-        function showPlayerToast(msg) {
+        function hidePlayerUI() {
             const modalContent = document.querySelector('.modal-content');
-            if (document.fullscreenElement === modalContent) return; // Do NOT show toasts in fullscreen to avoid covering video
-            const toast = document.getElementById('playerToast');
-            if (!toast) return;
-            toast.textContent = msg;
-            toast.classList.add('active');
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => {
-                toast.classList.remove('active');
-            }, 1500);
+            if (modalContent) {
+                clearTimeout(fsIdleTimer);
+                modalContent.classList.add('fs-idle');
+            }
+        }
+
+        function showPlayerUI(delay = 800) {
+            const modalContent = document.querySelector('.modal-content');
+            if (!modalContent) return;
+            if (isFsCleanMode) {
+                modalContent.classList.add('fs-idle');
+                return;
+            }
+            modalContent.classList.remove('fs-idle');
+            clearTimeout(fsIdleTimer);
+            fsIdleTimer = setTimeout(() => {
+                modalContent.classList.add('fs-idle');
+            }, delay);
+        }
+
+        function togglePlayerUI() {
+            const modalContent = document.querySelector('.modal-content');
+            if (!modalContent) return;
+            if (modalContent.classList.contains('fs-idle')) {
+                showPlayerUI(2500);
+            } else {
+                hidePlayerUI();
+            }
         }
 
         function toggleFsCleanMode() {
@@ -1559,77 +1667,79 @@
                 btn.innerHTML = isFsCleanMode ? '🙈' : '👁️';
                 btn.title = isFsCleanMode ? 'Tampilkan Kontrol UI (Shortcut: H)' : 'Sembunyikan UI Total (Shortcut: H)';
             }
-            if (!isFsCleanMode) {
-                resetFsIdleTimer();
-            }
-        }
-
-        function resetFsIdleTimer() {
-            const modalContent = document.querySelector('.modal-content');
-            if (!document.fullscreenElement || document.fullscreenElement !== modalContent) {
-                modalContent.classList.remove('fs-idle');
-                return;
-            }
-
             if (isFsCleanMode) {
-                modalContent.classList.add('fs-idle');
-                return;
+                hidePlayerUI();
+            } else {
+                showPlayerUI(1500);
             }
-
-            modalContent.classList.remove('fs-idle');
-            clearTimeout(fsIdleTimer);
-
-            // Hide HUD quickly (600ms) after mouse stops moving
-            fsIdleTimer = setTimeout(() => {
-                if (document.fullscreenElement === modalContent && !isHoveringUi) {
-                    modalContent.classList.add('fs-idle');
-                }
-            }, 600);
         }
 
         const modalContentEl = document.querySelector('.modal-content');
-        modalContentEl.addEventListener('mousemove', resetFsIdleTimer);
-        modalContentEl.addEventListener('click', resetFsIdleTimer);
-        modalContentEl.addEventListener('touchstart', resetFsIdleTimer, { passive: true });
+        modalContentEl.addEventListener('mousemove', () => showPlayerUI(600));
+        modalContentEl.addEventListener('mouseleave', () => hidePlayerUI());
+
+        const modalVideoBox = document.querySelector('.modal-video-box');
+        modalVideoBox.addEventListener('click', (e) => {
+            if (e.target.closest('button, input, select, a, label')) return;
+            togglePlayerUI();
+        });
 
         const modalHeaderEl = document.querySelector('.modal-header');
         const modalFooterEl = document.querySelector('.modal-footer');
         if (modalHeaderEl) {
-            modalHeaderEl.addEventListener('mouseenter', () => { isHoveringUi = true; });
-            modalHeaderEl.addEventListener('mouseleave', () => { isHoveringUi = false; resetFsIdleTimer(); });
+            modalHeaderEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showPlayerUI(2500);
+            });
+            modalHeaderEl.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                showPlayerUI(2500);
+            }, { passive: true });
         }
         if (modalFooterEl) {
-            modalFooterEl.addEventListener('mouseenter', () => { isHoveringUi = true; });
-            modalFooterEl.addEventListener('mouseleave', () => { isHoveringUi = false; resetFsIdleTimer(); });
+            modalFooterEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showPlayerUI(2500);
+            });
+            modalFooterEl.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                showPlayerUI(2500);
+            }, { passive: true });
         }
 
         function toggleFullscreen() {
             const modalContent = document.querySelector('.modal-content');
-            if (!document.fullscreenElement) {
+            const isCurrentlyFs = document.fullscreenElement === modalContent || modalContent.classList.contains('is-fullscreen');
+
+            if (!isCurrentlyFs) {
+                modalContent.classList.add('is-fullscreen');
                 if (modalContent.requestFullscreen) {
-                    modalContent.requestFullscreen().catch(err => {
-                        console.warn("Fullscreen notice:", err);
-                    });
+                    modalContent.requestFullscreen().catch(() => {});
                 }
+                updateFullscreenButton(true);
+                hidePlayerUI();
             } else {
-                if (document.exitFullscreen) {
+                modalContent.classList.remove('is-fullscreen');
+                if (document.fullscreenElement && document.exitFullscreen) {
                     document.exitFullscreen().catch(() => {});
                 }
+                updateFullscreenButton(false);
+                hidePlayerUI();
             }
         }
 
-        function updateFullscreenButton() {
+        function updateFullscreenButton(forceState) {
             const modalContent = document.querySelector('.modal-content');
-            const isFs = (document.fullscreenElement === modalContent);
+            const isFs = (typeof forceState === 'boolean') ? forceState : (document.fullscreenElement === modalContent || modalContent.classList.contains('is-fullscreen'));
             const btnFs = document.getElementById('btnFullscreen');
             const btnFsHeader = document.getElementById('btnFullscreenHeader');
             if (btnFs) {
                 btnFs.innerHTML = isFs ? '⛶ Keluar Fullscreen' : '⛶ Layar Penuh';
-                btnFs.title = isFs ? 'Keluar dari Layar Penuh (Shortcut: F / Esc)' : 'Masuk ke Layar Penuh (Shortcut: F / Double-Click)';
+                btnFs.title = isFs ? 'Keluar dari Layar Penuh' : 'Masuk ke Layar Penuh';
             }
             if (btnFsHeader) {
                 btnFsHeader.innerHTML = isFs ? '🗗' : '⛶';
-                btnFsHeader.title = isFs ? 'Keluar dari Layar Penuh (Shortcut: F / Esc)' : 'Layar Penuh (Shortcut: F / Double-Click)';
+                btnFsHeader.title = isFs ? 'Keluar dari Layar Penuh' : 'Layar Penuh';
             }
         }
 
@@ -1637,7 +1747,6 @@
             const fsEl = document.fullscreenElement;
             const modalContent = document.querySelector('.modal-content');
 
-            // If a video element somehow entered native fullscreen directly, redirect to modal-content!
             if (fsEl === videoA || fsEl === videoB) {
                 document.exitFullscreen().then(() => {
                     if (modalContent && modalContent.requestFullscreen) {
@@ -1647,22 +1756,14 @@
                 return;
             }
 
-            if (document.fullscreenElement === modalContent) {
-                updateFullscreenButton();
-                // Immediately hide UI into pure full video (0ms delay)
-                modalContent.classList.add('fs-idle');
-                clearTimeout(fsIdleTimer);
+            if (fsEl === modalContent) {
+                modalContent.classList.add('is-fullscreen');
+                updateFullscreenButton(true);
+                hidePlayerUI();
             } else {
-                modalContent.classList.remove('fs-idle');
-                modalContent.classList.remove('fs-clean-mode');
-                isFsCleanMode = false;
-                const btn = document.getElementById('btnToggleUi');
-                if (btn) {
-                    btn.innerHTML = '👁️';
-                    btn.title = 'Sembunyikan / Tampilkan UI (Shortcut: H)';
-                }
-                clearTimeout(fsIdleTimer);
-                updateFullscreenButton();
+                modalContent.classList.remove('is-fullscreen');
+                updateFullscreenButton(false);
+                hidePlayerUI();
             }
         });
 
