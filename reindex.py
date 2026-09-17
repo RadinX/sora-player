@@ -313,16 +313,16 @@ def perform_git_sync(repo_dir, token=None, commit_msg=None):
 
     # Determine push URL / command
     print("[Git] Melakukan push ke origin main...")
-    push_cmd = ["git", "push"]
+    # First attempt standard git push origin main
+    push_res = subprocess.run(["git", "push", "origin", "main"], cwd=repo_dir, capture_output=True, text=True)
 
-    if token:
-        # Use authenticated push URL
+    # If standard push failed and token is available, attempt authenticated push
+    if push_res.returncode != 0 and token:
         auth_url = f"https://{token}@github.com/{DEFAULT_OWNER}/{PLAYER_REPO}.git"
-        push_cmd = ["git", "push", auth_url, "HEAD:main"]
-    else:
-        push_cmd = ["git", "push", "origin", "main"]
+        push_res = subprocess.run(["git", "push", auth_url, "HEAD:main"], cwd=repo_dir, capture_output=True, text=True)
+        if push_res.returncode == 0:
+            subprocess.run(["git", "fetch", "origin", "main"], cwd=repo_dir, capture_output=True)
 
-    push_res = subprocess.run(push_cmd, cwd=repo_dir, capture_output=True, text=True)
     if push_res.returncode == 0:
         print(f"  🎉 SUKSES: Perubahan berhasil di-push ke https://github.com/{DEFAULT_OWNER}/{PLAYER_REPO}!")
         return True
