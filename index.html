@@ -543,7 +543,35 @@
             color: white;
         }
 
-        /* Unified Fullscreen Mode (Synchronized Player Layout) */
+        /* Toast Notification */
+        .player-toast {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(15, 23, 42, 0.95);
+            color: #f1f5f9;
+            padding: 8px 20px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s ease;
+            z-index: 200;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            white-space: nowrap;
+        }
+
+        .player-toast.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Unified Fullscreen Mode (Pure Full Video with Auto-Hiding Floating HUD) */
         .modal-content:fullscreen,
         .modal-content:-webkit-full-screen {
             width: 100vw !important;
@@ -554,48 +582,128 @@
             border: none !important;
             background: #000 !important;
             box-shadow: none !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important;
+            display: block !important;
+            position: relative !important;
             overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
-        .modal-content:fullscreen .modal-header,
-        .modal-content:-webkit-full-screen .modal-header {
-            background: rgba(11, 15, 25, 0.96) !important;
-            padding: 10px 24px !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
-            flex-shrink: 0 !important;
-            z-index: 10 !important;
-        }
-
+        /* Video box occupies 100% of entire viewport */
         .modal-content:fullscreen .modal-video-box,
         .modal-content:-webkit-full-screen .modal-video-box {
-            flex: 1 !important;
-            width: 100% !important;
-            height: 100% !important;
-            max-height: none !important;
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
             aspect-ratio: auto !important;
             background: #000 !important;
-            position: relative !important;
-            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            z-index: 1 !important;
         }
 
         .modal-content:fullscreen .modal-video-box video,
         .modal-content:-webkit-full-screen .modal-video-box video {
+            position: absolute !important;
+            inset: 0 !important;
             width: 100% !important;
             height: 100% !important;
             max-height: 100% !important;
             object-fit: contain !important;
+            background: #000 !important;
         }
 
+        /* Floating Top Header Overlay */
+        .modal-content:fullscreen .modal-header,
+        .modal-content:-webkit-full-screen .modal-header {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 50 !important;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%) !important;
+            border: none !important;
+            padding: 16px 28px 36px 28px !important;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            pointer-events: auto;
+        }
+
+        /* Floating Bottom Control Capsule Overlay */
         .modal-content:fullscreen .modal-footer,
         .modal-content:-webkit-full-screen .modal-footer {
-            background: rgba(11, 15, 25, 0.96) !important;
-            padding: 10px 24px !important;
-            border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
-            flex-shrink: 0 !important;
-            z-index: 10 !important;
+            position: absolute !important;
+            bottom: 58px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 50 !important;
+            background: rgba(15, 23, 42, 0.88) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            border-radius: 50px !important;
+            padding: 8px 22px !important;
+            gap: 16px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7) !important;
+            width: auto !important;
+            max-width: 95vw !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            pointer-events: auto;
+        }
+
+        /* Pure Full Video Mode when idle in Fullscreen (ZERO UI DISTRACTION) */
+        .modal-content.fs-idle:fullscreen,
+        .modal-content.fs-idle:-webkit-full-screen {
+            cursor: none !important;
+        }
+
+        .modal-content.fs-idle:fullscreen .modal-header,
+        .modal-content.fs-idle:-webkit-full-screen .modal-header {
+            opacity: 0 !important;
+            transform: translateY(-100%) !important;
+            pointer-events: none !important;
+        }
+
+        .modal-content.fs-idle:fullscreen .modal-footer,
+        .modal-content.fs-idle:-webkit-full-screen .modal-footer {
+            opacity: 0 !important;
+            transform: translate(-50%, 40px) !important;
+            pointer-events: none !important;
+        }
+
+        /* Clean Mode (Manual permanent hide UI in Fullscreen via 'H' shortcut) */
+        .modal-content.fs-clean-mode:fullscreen,
+        .modal-content.fs-clean-mode:-webkit-full-screen {
+            cursor: none !important;
+        }
+
+        .modal-content.fs-clean-mode:fullscreen .modal-header,
+        .modal-content.fs-clean-mode:-webkit-full-screen .modal-header,
+        .modal-content.fs-clean-mode:fullscreen .modal-footer,
+        .modal-content.fs-clean-mode:-webkit-full-screen .modal-footer {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateY(-100%) !important;
+        }
+
+        .modal-content.fs-clean-mode:fullscreen .modal-footer,
+        .modal-content.fs-clean-mode:-webkit-full-screen .modal-footer {
+            transform: translate(-50%, 50px) !important;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content:fullscreen .modal-footer,
+            .modal-content:-webkit-full-screen .modal-footer {
+                bottom: 48px !important;
+                padding: 6px 14px !important;
+                border-radius: 16px !important;
+                flex-wrap: wrap !important;
+                gap: 8px !important;
+            }
         }
 
         @media (max-width: 768px) {
@@ -688,12 +796,14 @@
     <!-- Modal Video Player -->
     <div class="modal" id="videoModal" onclick="onModalBackdropClick(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
+            <div id="playerToast" class="player-toast"></div>
             <div class="modal-header">
                 <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; flex: 1;">
                     <span id="modalVideoBadge" style="background: var(--accent); color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">#1 / ...</span>
                     <div class="modal-title" id="modalTitle">Video Title</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
+                    <button class="btn-fs-icon" id="btnToggleUi" onclick="toggleFsCleanMode()" title="Sembunyikan / Tampilkan UI (Shortcut: H)">👁️</button>
                     <button class="btn-fs-icon" id="btnFullscreenHeader" onclick="toggleFullscreen()" title="Layar Penuh (Shortcut: F)">⛶</button>
                     <button class="modal-close" onclick="closeModal()">✕</button>
                 </div>
@@ -1406,7 +1516,77 @@
         videoA.addEventListener('timeupdate', onPlayerTimeUpdate);
         videoB.addEventListener('timeupdate', onPlayerTimeUpdate);
 
-        // Fullscreen Player Management (Unified with non-fullscreen player)
+        // Fullscreen Player Management & Auto-Hiding HUD
+        let fsIdleTimer = null;
+        let isFsCleanMode = false;
+        let isHoveringUi = false;
+        let toastTimer = null;
+
+        function showPlayerToast(msg) {
+            const toast = document.getElementById('playerToast');
+            if (!toast) return;
+            toast.textContent = msg;
+            toast.classList.add('active');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('active');
+            }, 2000);
+        }
+
+        function toggleFsCleanMode() {
+            const modalContent = document.querySelector('.modal-content');
+            isFsCleanMode = !isFsCleanMode;
+            modalContent.classList.toggle('fs-clean-mode', isFsCleanMode);
+            const btn = document.getElementById('btnToggleUi');
+            if (btn) {
+                btn.innerHTML = isFsCleanMode ? '🙈' : '👁️';
+                btn.title = isFsCleanMode ? 'Tampilkan Kontrol UI (Shortcut: H)' : 'Sembunyikan UI Total (Shortcut: H)';
+            }
+            showPlayerToast(isFsCleanMode ? "Mode Murni Video (UI disembunyikan total)" : "Mode Kontrol Otomatis (UI muncul saat kursor bergerak)");
+            if (!isFsCleanMode) {
+                resetFsIdleTimer();
+            }
+        }
+
+        function resetFsIdleTimer() {
+            const modalContent = document.querySelector('.modal-content');
+            if (!document.fullscreenElement || document.fullscreenElement !== modalContent) {
+                modalContent.classList.remove('fs-idle');
+                return;
+            }
+
+            if (isFsCleanMode) {
+                modalContent.classList.add('fs-idle');
+                return;
+            }
+
+            modalContent.classList.remove('fs-idle');
+            clearTimeout(fsIdleTimer);
+
+            // Hide HUD after 2 seconds of inactivity
+            fsIdleTimer = setTimeout(() => {
+                if (document.fullscreenElement === modalContent && !isHoveringUi) {
+                    modalContent.classList.add('fs-idle');
+                }
+            }, 2000);
+        }
+
+        const modalContentEl = document.querySelector('.modal-content');
+        modalContentEl.addEventListener('mousemove', resetFsIdleTimer);
+        modalContentEl.addEventListener('click', resetFsIdleTimer);
+        modalContentEl.addEventListener('touchstart', resetFsIdleTimer, { passive: true });
+
+        const modalHeaderEl = document.querySelector('.modal-header');
+        const modalFooterEl = document.querySelector('.modal-footer');
+        if (modalHeaderEl) {
+            modalHeaderEl.addEventListener('mouseenter', () => { isHoveringUi = true; });
+            modalHeaderEl.addEventListener('mouseleave', () => { isHoveringUi = false; resetFsIdleTimer(); });
+        }
+        if (modalFooterEl) {
+            modalFooterEl.addEventListener('mouseenter', () => { isHoveringUi = true; });
+            modalFooterEl.addEventListener('mouseleave', () => { isHoveringUi = false; resetFsIdleTimer(); });
+        }
+
         function toggleFullscreen() {
             const modalContent = document.querySelector('.modal-content');
             if (!document.fullscreenElement) {
@@ -1451,7 +1631,27 @@
                 return;
             }
 
-            updateFullscreenButton();
+            if (document.fullscreenElement === modalContent) {
+                updateFullscreenButton();
+                // Immediately start 1.2s idle timer so controls auto-hide into full video
+                clearTimeout(fsIdleTimer);
+                fsIdleTimer = setTimeout(() => {
+                    if (document.fullscreenElement === modalContent && !isHoveringUi) {
+                        modalContent.classList.add('fs-idle');
+                    }
+                }, 1200);
+            } else {
+                modalContent.classList.remove('fs-idle');
+                modalContent.classList.remove('fs-clean-mode');
+                isFsCleanMode = false;
+                const btn = document.getElementById('btnToggleUi');
+                if (btn) {
+                    btn.innerHTML = '👁️';
+                    btn.title = 'Sembunyikan / Tampilkan UI (Shortcut: H)';
+                }
+                clearTimeout(fsIdleTimer);
+                updateFullscreenButton();
+            }
         });
 
         // Global & Modal Keyboard Shortcuts
@@ -1473,8 +1673,32 @@
                 }
             }
 
+            // 'H' shortcut: Toggle Clean Video Mode (Hide UI) in Fullscreen
+            if (e.key === 'h' || e.key === 'H') {
+                if (modal.classList.contains('active')) {
+                    e.preventDefault();
+                    toggleFsCleanMode();
+                    return;
+                }
+            }
+
+            // 'L' shortcut: Toggle Loop 1 Video
+            if (e.key === 'l' || e.key === 'L') {
+                if (modal.classList.contains('active')) {
+                    e.preventDefault();
+                    const loopCheck = document.getElementById('loopCheck');
+                    if (loopCheck) {
+                        loopCheck.checked = !loopCheck.checked;
+                        onLoopToggle();
+                        showPlayerToast(loopCheck.checked ? "🔁 Loop 1 Video: Aktif" : "🔁 Loop 1 Video: Nonaktif");
+                    }
+                    return;
+                }
+            }
+
             // 'R' shortcut: Play Random Video
             if (e.key === 'r' || e.key === 'R') {
+                showPlayerToast("🎲 Memutar video acak...");
                 playRandomVideo();
                 return;
             }
