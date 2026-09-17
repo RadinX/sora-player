@@ -623,6 +623,28 @@
             background: #000 !important;
         }
 
+        /* Suppress native media player control bar flash in Fullscreen & Clean mode */
+        .modal-content:fullscreen video::-webkit-media-controls,
+        .modal-content:-webkit-full-screen video::-webkit-media-controls,
+        .modal-content.is-fullscreen video::-webkit-media-controls,
+        .modal-content:fullscreen video::-webkit-media-controls-enclosure,
+        .modal-content:-webkit-full-screen video::-webkit-media-controls-enclosure,
+        .modal-content.is-fullscreen video::-webkit-media-controls-enclosure,
+        .modal-content:fullscreen video::-webkit-media-controls-panel,
+        .modal-content:-webkit-full-screen video::-webkit-media-controls-panel,
+        .modal-content.is-fullscreen video::-webkit-media-controls-panel {
+            display: none !important;
+            -webkit-appearance: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+        .modal-content:fullscreen video::-moz-media-controls,
+        .modal-content.is-fullscreen video::-moz-media-controls {
+            display: none !important;
+        }
+
         /* Floating Top Header Overlay */
         .modal-content:fullscreen .player-toast,
         .modal-content:-webkit-full-screen .player-toast,
@@ -934,7 +956,7 @@
     </div>
 
     <!-- Video Manifest Data File -->
-    <script src="videos.js?v=42683"></script>
+    <script src="videos.js?v=42683_clean"></script>
 
     <script>
         let allVideos = [];
@@ -1368,6 +1390,10 @@
             updateModalUI(index);
 
             // Active player setup: gets 100% bandwidth to start playing immediately!
+            const modalContentEl = document.querySelector('.modal-content');
+            const isFs = modalContentEl && (document.fullscreenElement === modalContentEl || modalContentEl.classList.contains('is-fullscreen'));
+            activeVideo.controls = !isFs;
+            standbyVideo.controls = !isFs;
             activeVideo.src = url;
             activeVideo.currentTime = 0;
             activeVideo.loop = loopCheck ? loopCheck.checked : false;
@@ -1395,6 +1421,8 @@
         }
 
         function closeModal() {
+            videoA.controls = true;
+            videoB.controls = true;
             if (document.fullscreenElement && document.exitFullscreen) {
                 document.exitFullscreen().catch(() => {});
             }
@@ -1449,6 +1477,11 @@
             const performSwap = () => {
                 syncVolume(activeVideo, standbyVideo);
                 standbyVideo.loop = loopCheck ? loopCheck.checked : false;
+
+                const modalContentEl = document.querySelector('.modal-content');
+                const isFs = modalContentEl && (document.fullscreenElement === modalContentEl || modalContentEl.classList.contains('is-fullscreen'));
+                standbyVideo.controls = !isFs;
+                activeVideo.controls = !isFs;
 
                 const playPromise = standbyVideo.play();
                 if (playPromise !== undefined) {
@@ -1713,6 +1746,8 @@
 
             if (!isCurrentlyFs) {
                 modalContent.classList.add('is-fullscreen');
+                videoA.controls = false;
+                videoB.controls = false;
                 if (modalContent.requestFullscreen) {
                     modalContent.requestFullscreen().catch(() => {});
                 }
@@ -1720,6 +1755,8 @@
                 hidePlayerUI();
             } else {
                 modalContent.classList.remove('is-fullscreen');
+                videoA.controls = true;
+                videoB.controls = true;
                 if (document.fullscreenElement && document.exitFullscreen) {
                     document.exitFullscreen().catch(() => {});
                 }
@@ -1758,10 +1795,14 @@
 
             if (fsEl === modalContent) {
                 modalContent.classList.add('is-fullscreen');
+                videoA.controls = false;
+                videoB.controls = false;
                 updateFullscreenButton(true);
                 hidePlayerUI();
             } else {
                 modalContent.classList.remove('is-fullscreen');
+                videoA.controls = true;
+                videoB.controls = true;
                 updateFullscreenButton(false);
                 hidePlayerUI();
             }
